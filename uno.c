@@ -42,7 +42,7 @@ int get_players();
 struct card *shuffle();
 struct card *find_empty_space(struct card *deck);
 struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *szHands);
-void display(struct card **players, int current_player, int *szHands, struct card *discarded);
+void display(struct card **players, int szPlayers, int current_player, int *szHands, struct card *discarded, bool rotation);
 char *color_card(struct card *c);
 void update(struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation);
 
@@ -71,7 +71,7 @@ int main()
   // quando il gioco finisce il mazzo del current_player viene deallocato e portato a NULL
   // quindi la condizione diventa falsa perchè (players + current_player) == NULL == 0
   {
-    display(players, current_player, size_hands, discarded);
+    display(players, size_players, current_player, size_hands, discarded, rotation);
     //  get_move();
     update(deck, &size_deck, players, &size_players, &current_player, &rotation);
   }
@@ -198,17 +198,25 @@ struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *s
 }
 
 // stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
-void display(struct card **players, int current_player, int *szHands, struct card *discarded)
+void display(struct card **players, int szPlayers, int current_player, int *szHands, struct card *discarded, bool rotation)
 {
   system(clear);
 
-  printf("Giocatore %d\n\n\n", current_player + 1); // mostra il numero del giocatore corrente
+  printf("Turno del Giocatore %d\n\n", current_player + 1); // mostra il numero del giocatore corrente
 
-  for (int i = 0; i < (*(szHands + current_player) - 1); i++) // aggiusta il mazzo discard più o meno
-    printf("\t");                                             // al centro rispetto alla mano
+  for (int i = 0; i < szPlayers; i++) // mostra il numero di carte nelle mani degli avversari
+    if (i != current_player)
+      printf("il giocatore %d ha %d carte nella sua mano\n", i + 1, *(szHands + i));
+
+  printf("\nIl giro e' attualmente in senso %s", rotation ? "orario" : "antiorario");
+
+  printf("\n\n\n");
+
+  for (int i = 0; i < (*(szHands + current_player)); i++) // aggiusta il mazzo discard più o meno
+    printf("\t");                                         // al centro rispetto alla mano
 
   char *colored_card = color_card(discarded); // la carta in cima al mazzo discard
-  printf("%s\n\n\n\n\n", colored_card);
+  printf("%s\n\n\n\n\n\t", colored_card);
 
   for (int i = 0; i < (*(szHands + current_player)); i++) // mostra la mano del giocatore
   {
