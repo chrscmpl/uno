@@ -197,19 +197,26 @@ struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *s
   return players;
 }
 
-// stampa a video la mano del giocatore e la carta in cima al mazzo discard
+// stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
 void display(struct card **players, int current_player, int *szHands, struct card *discarded)
 {
-  char *colored_card = color_card(discarded);
   system(clear);
-  printf("Giocatore %d\n", current_player + 1);
-  printf("*************************************************************************************************\n");
-  printf("\n\t\t\t\t\t\t%s\n\n", colored_card);
-  for (int i = 0; i < (*(szHands + current_player)); i++)
+
+  printf("Giocatore %d\n\n\n", current_player + 1); // mostra il numero del giocatore corrente
+
+  for (int i = 0; i < (*(szHands + current_player) - 1); i++) // aggiusta il mazzo discard più o meno
+    printf("\t");                                             // al centro rispetto alla mano
+
+  char *colored_card = color_card(discarded); // la carta in cima al mazzo discard
+  printf("%s\n\n\n\n\n", colored_card);
+
+  for (int i = 0; i < (*(szHands + current_player)); i++) // mostra la mano del giocatore
   {
     colored_card = color_card(*(players + current_player) + i);
     printf("%s\t\t", colored_card);
   }
+
+  printf(RESET);
   free(colored_card);
 }
 
