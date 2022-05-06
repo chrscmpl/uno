@@ -2,9 +2,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define SIZE_DECK 108
 #define STARTING_HAND_SIZE 7
+
+// colori
+#define RED "\x1b[31m"
+#define GREEN "\x1b[32m"
+#define BLUE "\x1b[34m"
+#define YELLOW "\x1b[33m"
+#define RESET "\x1b[0m"
 
 // per fare cancellare correttamente il terminale alla chiamata di system()
 // indipendentemente dal sistema operativo per cui il codice è compilato
@@ -26,47 +34,46 @@ enum col
 
 struct card
 {
-  char face[3];
+  char front[3];
   enum col color;
 };
 
 int get_players();
 struct card *shuffle();
 struct card *find_empty_space(struct card *deck);
-struct card **init_players(struct card *deck, int *szDeck, int szPlayers);
-void turn(struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation);
+struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *szHands);
+void display(struct card **players, int current_player, int *szHands, struct card *discarded);
+char *color_card(struct card *c);
+void update(struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation);
 
 int main()
 {
-  struct card *deck;
-  struct card **players;
+  srand(time(0)); // per valori randomici
 
-  deck = shuffle();
+  // inizializazione mazzo principale
+  struct card *deck = shuffle();
   int size_deck = SIZE_DECK;
-  /*
-  for (int i = 0; i < size_deck; i++)
-  {
-    printf("f= %s\tc= %d\n", (deck + i)->face, (deck + i)->color);
-  }
-  */
+
+  // inizializzazione mani dei giocatori
   int size_players = get_players();
-  players = init_players(deck, &size_deck, size_players);
-  /*
-  for (int i = 0; i < size_players; i++)
-  {
-    printf("mano del giocatore %d:\n", i);
-    for (int j = 0; j < STARTING_HAND_SIZE; j++)
-      printf("\t%s\t%d\n", (*(players + i) + j)->face, (*(players + i) + j)->color);
-  }
-  */
+  int *size_hands = (int *)malloc(sizeof(int) * size_players);
+  struct card **players = init_players(deck, &size_deck, size_players, size_hands);
+
+  // variabili necessarie per il gioco
   int current_player = 0;
   bool rotation = true; // true = sinistra; false = destra;
+  struct card *discarded;
+  size_deck--;
+  discarded = (deck + size_deck);
 
-  while (players + current_player)
+  // loop del gioco
+  while (*(players + current_player))
   // quando il gioco finisce il mazzo del current_player viene deallocato e portato a NULL
   // quindi la condizione diventa falsa perchè (players + current_player) == NULL == 0
   {
-    turn(deck, &size_deck, players, &size_players, &current_player, &rotation);
+    display(players, current_player, size_hands, discarded);
+    //  get_move();
+    update(deck, &size_deck, players, &size_players, &current_player, &rotation);
   }
 
   return 0;
@@ -106,8 +113,8 @@ struct card *shuffle()
       {
         struct card *pos = find_empty_space(deck);
         pos->color = (enum col)c;
-        pos->face[0] = i + 48; // ascii
-        pos->face[1] = '\0';
+        pos->front[0] = i + 48; // ascii
+        pos->front[1] = '\0';
       }
     }
 
@@ -116,7 +123,7 @@ struct card *shuffle()
     {
       struct card *pos = find_empty_space(deck);
       pos->color = (enum col)c;
-      strcpy(pos->face, "S");
+      strcpy(pos->front, "S");
     }
 
     // carte reverse
@@ -124,7 +131,7 @@ struct card *shuffle()
     {
       struct card *pos = find_empty_space(deck);
       pos->color = (enum col)c;
-      strcpy(pos->face, "R");
+      strcpy(pos->front, "R");
     }
 
     // carte +2
@@ -132,7 +139,7 @@ struct card *shuffle()
     {
       struct card *pos = find_empty_space(deck);
       pos->color = (enum col)c;
-      strcpy(pos->face, "+2");
+      strcpy(pos->front, "+2");
     }
   }
 
@@ -141,7 +148,7 @@ struct card *shuffle()
   {
     struct card *pos = find_empty_space(deck);
     pos->color = n;
-    strcpy(pos->face, "C");
+    strcpy(pos->front, "C");
   }
 
   // carte nere +4
@@ -149,7 +156,7 @@ struct card *shuffle()
   {
     struct card *pos = find_empty_space(deck);
     pos->color = n;
-    strcpy(pos->face, "+4");
+    strcpy(pos->front, "+4");
   }
 
   return deck;
@@ -167,7 +174,7 @@ struct card *find_empty_space(struct card *deck)
 }
 
 // inizializza i mazzi dei giocatori
-struct card **init_players(struct card *deck, int *szDeck, int szPlayers)
+struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *szHands)
 {
   // inizializza l'array di mazzi
   struct card **players = (struct card **)malloc(sizeof(struct card *) * szPlayers);
@@ -181,13 +188,77 @@ struct card **init_players(struct card *deck, int *szDeck, int szPlayers)
     {
       (*szDeck)--;
       ((*(players + i)) + j)->color = (deck + (*szDeck))->color;
-      strcpy((*(players + i) + j)->face, (deck + (*szDeck))->face);
+      strcpy((*(players + i) + j)->front, (deck + (*szDeck))->front);
     }
+
+  for (int i = 0; i < szPlayers; i++)
+    *(szHands + i) = STARTING_HAND_SIZE;
 
   return players;
 }
 
-void turn(struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation)
+void display(struct card **players, int current_player, int *szHands, struct card *discarded)
 {
-  printf("\nhello\n");
+  char *colored_card = color_card(discarded);
+  system(clear);
+  printf("*****************************************************************************\n");
+  printf("\n\t\t\t%s\n\n", colored_card);
+  for (int i = 0; i < (*(szHands + current_player)); i++)
+  {
+    colored_card = color_card(*(players + current_player) + i);
+    printf("%s\t", colored_card);
+  }
+  free(colored_card);
+}
+
+char *color_card(struct card *c)
+{
+  char color[6];
+  switch (c->color)
+  {
+  case r:
+    strcpy(color, RED);
+    break;
+  case g:
+    strcpy(color, GREEN);
+    break;
+  case b:
+    strcpy(color, BLUE);
+    break;
+  case y:
+    strcpy(color, YELLOW);
+    break;
+  case n:
+    strcpy(color, RESET);
+  }
+
+  char *face;
+  switch (c->front[0])
+  {
+  case 'S':
+    face = (char *)malloc(sizeof(char) * 5);
+    strcpy(face, "Stop");
+    break;
+  case 'R':
+    face = (char *)malloc(sizeof(char) * 8);
+    strcpy(face, "Reverse");
+    break;
+  case 'C':
+    face = (char *)malloc(sizeof(char) * 7);
+    strcpy(face, "Choose");
+  }
+
+  char *colored_card;
+  colored_card = (char *)malloc(sizeof(char) * (strlen(face) + strlen(color)));
+  printf("%d\t%d\t%d\n", strlen(colored_card), strlen(color), strlen(face));
+  strcpy(colored_card, color);
+  strcat(colored_card, face);
+
+  free(face);
+  return colored_card;
+}
+
+void update(struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation)
+{
+  *(players + *current_player) = NULL;
 }
