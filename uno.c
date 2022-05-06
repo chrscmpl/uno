@@ -204,11 +204,19 @@ void display(struct card **players, int szPlayers, int current_player, int *szHa
 
   printf("Turno del Giocatore %d\n\n", current_player + 1); // mostra il numero del giocatore corrente
 
-  for (int i = 0; i < szPlayers; i++) // mostra il numero di carte nelle mani degli avversari
+  // mostra il numero di carte nelle mani degli avversari, nell'ordine della rotazione
+  for (int i = rotation ? 0 : (szPlayers - 1); (rotation && (i < szPlayers)) || (!rotation && (i >= 0));)
+  {
     if (i != current_player)
       printf("il giocatore %d ha %d carte nella sua mano\n", i + 1, *(szHands + i));
+    if (rotation)
+      i++;
+    else
+      i--;
+  }
 
-  printf("\nIl giro e' attualmente in senso %s", rotation ? "orario" : "antiorario");
+  // mostra il verso di rotazione
+  printf("\nLa rotazione e' attualmente in senso %s", rotation ? "orario" : "antiorario");
 
   printf("\n\n\n");
 
