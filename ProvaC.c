@@ -2,6 +2,14 @@
 
 #define DIM_DECK 108
 
+// per fare cancellare correttamente il terminale alla chiamata di system()
+// indipendentemente dal sistema operativo per cui il codice è compilato
+#ifdef _WIN32
+#define clear "cls"
+#else
+#define clear "clear"
+#endif
+
 enum col
 {
   na,
@@ -43,7 +51,7 @@ int get_players()
     if (p < 1 || p > 4)
       printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 1 e 4: ");
   }
-  system("cls");
+  system(clear);
   return p;
 }
 
