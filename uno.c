@@ -197,22 +197,27 @@ struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *s
   return players;
 }
 
+// stampa a video la mano del giocatore e la carta in cima al mazzo discard
 void display(struct card **players, int current_player, int *szHands, struct card *discarded)
 {
   char *colored_card = color_card(discarded);
   system(clear);
-  printf("*****************************************************************************\n");
-  printf("\n\t\t\t%s\n\n", colored_card);
+  printf("Giocatore %d\n", current_player + 1);
+  printf("*************************************************************************************************\n");
+  printf("\n\t\t\t\t\t\t%s\n\n", colored_card);
   for (int i = 0; i < (*(szHands + current_player)); i++)
   {
     colored_card = color_card(*(players + current_player) + i);
-    printf("%s\t", colored_card);
+    printf("%s\t\t", colored_card);
   }
   free(colored_card);
 }
 
+// converte una carta in una stringa che ha come prefisso la sequenza di escape
+// corrispondente al suo colore
 char *color_card(struct card *c)
 {
+  // imposta il colore
   char color[6];
   switch (c->color)
   {
@@ -232,7 +237,8 @@ char *color_card(struct card *c)
     strcpy(color, RESET);
   }
 
-  char *face;
+  // per le carte speciali
+  char *face = NULL;
   switch (c->front[0])
   {
   case 'S':
@@ -248,11 +254,11 @@ char *color_card(struct card *c)
     strcpy(face, "Choose");
   }
 
+  // compone la stringa
   char *colored_card;
-  colored_card = (char *)malloc(sizeof(char) * (strlen(face) + strlen(color)));
-  printf("%d\t%d\t%d\n", strlen(colored_card), strlen(color), strlen(face));
+  colored_card = (char *)malloc(sizeof(char) * ((face ? strlen(face) : 2) + strlen(color)));
   strcpy(colored_card, color);
-  strcat(colored_card, face);
+  strcat(colored_card, (face ? face : c->front));
 
   free(face);
   return colored_card;
