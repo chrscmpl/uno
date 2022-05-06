@@ -7,7 +7,7 @@
 #define SIZE_DECK 108
 #define STARTING_HAND_SIZE 7
 
-// colori
+// caratteri di escape corrispondenti ai varii colori
 #define RED "\x1b[31m"
 #define GREEN "\x1b[32m"
 #define BLUE "\x1b[34m"
@@ -232,7 +232,7 @@ void display(struct card **players, int szPlayers, int current_player, int *szHa
     printf("%s\t\t", colored_card);
   }
 
-  printf(RESET);
+  printf("%s\n\n", RESET);
   free(colored_card);
 }
 
