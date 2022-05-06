@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define SIZE_DECK 108
 
@@ -51,8 +52,8 @@ int main()
   for (int i = 0; i < size_players; i++)
   {
     printf("mano del giocatore %d:\n", i);
-    for (int j = 0; j < 10; j++)
-      printf("\t%s\t%d\n", (*(players + i))->face, (*(players + i))->color);
+    for (int j = 0; j < 7; j++)
+      printf("\t%s\t%d\n", (*(players + i) + j)->face, (*(players + i) + j)->color);
   }
   return 0;
 }
@@ -162,11 +163,11 @@ struct card **init_players(struct card *deck, int *szDeck, int szPlayers)
     *(players + i) = (struct card *)malloc(sizeof(struct card) * (*szDeck)); // alloca lo spazio necessario
 
   for (int i = 0; i < szPlayers; i++) // pesca carte dal mazzo
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 7; j++)
     {
-      (*(players + i) + j)->color = (deck + *szDeck)->color;
-      strcpy((*(players + i) + j)->face, (deck + *szDeck)->face);
       (*szDeck)--;
+      ((*(players + i)) + j)->color = (deck + (*szDeck))->color;
+      strcpy((*(players + i) + j)->face, (deck + (*szDeck))->face);
     }
 
   return players;
