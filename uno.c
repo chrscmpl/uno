@@ -309,7 +309,8 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
     chosen.front[0] = '\0'; // inizializzazione variabile
     chosen.color = na;
 
-    fflush(stdin);
+    fflush(stdin); // mi ha salvato da un loop infinito
+
     scanf("%20[^\n]", move); // per leggere l'intera riga senza fermarsi agli spazi
     fflush(stdin);
 
@@ -328,7 +329,11 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
     if (!strcmp(move, "aiuto"))
       return 'h';
 
-    if (spazi == 1 || !strcmp(move, "choose") || strcmp(move, "+4")) // poichè per le nere non serve specificare il colore non ci sono spazi
+    // ricorda di dire Uno!
+    if (strcmp(move, "uno") && *(size_hands + current_player) == 1)
+      return 'u';
+
+    if (spazi == 1 || !strcmp(move, "choose") || !strcmp(move, "+4")) // poichè per le nere non serve specificare il colore non ci sono spazi
     {
 
       char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
