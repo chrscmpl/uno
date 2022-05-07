@@ -323,6 +323,10 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
       temp++;
     }
 
+    // regolamento
+    if (!strcmp(move, "aiuto"))
+      return 'h';
+
     if (spazi == 1)
     {
 
@@ -348,13 +352,11 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
         strcpy(chosen.front, "C");
         chosen.color = n;
       }
-      // regolamento
-      else if (!strcmp(token, "aiuto"))
-        return 'h';
 
+      // prende la seconda parola, corrispondente al colore
       if (chosen.color == na)
       {
-        token = strtok(NULL, " "); // prende la seconda parola, corrispondente al colore
+        token = strtok(NULL, " ");
 
         if (!strcmp(token, "rosso"))
           chosen.color = r;
@@ -369,17 +371,17 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
       // controlla la validità della mossa
       if (chosen.front && chosen.color != na)
       {
-        if (chosen.front != discarded->front && chosen.color != discarded->color && chosen.color != n)
+        // confronto con quella in cima al mazzo discard
+        if (strcmp(chosen.front, discarded->front) && chosen.color != discarded->color && chosen.color != n)
         {
           printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
         }
         else
         {
+          // confronto con quelle nella mano del giocatore
           for (int i = 0; i < *(size_hands + current_player); i++)
           {
             struct card temp = *(*(players + current_player) + i);
-            printf("mossa: %s %d\t", chosen.front, chosen.color);
-            printf("mano: %s %d\n", temp.front, temp.color);
             if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
               return i + 48;
           }
@@ -401,5 +403,6 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
 
 void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation)
 {
+  printf("%c\n", move);
   *(players + *current_player) = NULL;
 }
