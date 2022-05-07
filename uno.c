@@ -46,7 +46,7 @@ void display(struct card **players, int szPlayers, int current_player, int *szHa
 char *color_card(struct card *c);
 void lowercase(char *);
 char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded);
-void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, struct card *discarded);
+void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, short *plus, struct card *discarded);
 int choose_color();
 void help();
 
@@ -71,6 +71,7 @@ int main()
   struct card *discarded;
   size_deck--;
   discarded = (deck + size_deck);
+  short plus = 0;
 
   // loop del gioco
   while (*(players + current_player))
@@ -79,7 +80,7 @@ int main()
   {
     display(players, size_players, current_player, size_hands, discarded, rotation);
     char move = get_move(players, current_player, size_hands, discarded);
-    update(move, deck, &size_deck, players, &size_players, size_hands, &current_player, &rotation, discarded);
+    update(move, deck, &size_deck, players, &size_players, size_hands, &current_player, &rotation, &plus, discarded);
   }
 
   return 0;
@@ -449,7 +450,7 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
   }
 }
 
-void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, struct card *discarded)
+void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, short *plus, struct card *discarded)
 {
   struct card *player = *(players + *current_player); // leggibilità
   int *szHand = (size_hands + *current_player);
@@ -461,8 +462,10 @@ void update(char move, struct card *deck, int *szDeck, struct card **players, in
   case 'h':
     help();
     break;
-    // case 'p':
-    //   break;
+  case 'd':
+  case 'u':
+  case '+':
+    return;
   }
 
   // aggiorna il mazzo discard
@@ -479,12 +482,21 @@ void update(char move, struct card *deck, int *szDeck, struct card **players, in
     break;
   case 'C':
     discarded->color = (enum col)choose_color();
+    break;
+  case '+':
+    if ((player + played)->front[1] == '4')
+      discarded->color = (enum col)choose_color();
+    plus += (player + played)->front[1] - 48;
   }
 
   // aggiorna la mano
   for (int i = played; i < *szHand - 1; i++)
     *(player + i) = *(player + i + 1);
   (*szHand)--;
+
+  // controlla vittoria
+  if (!(*szHand))
+    player = NULL;
 
   // passa il turno
   if (*rotation)
