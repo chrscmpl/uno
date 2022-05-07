@@ -44,8 +44,11 @@ struct card *find_empty_space(struct card *deck);
 struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *szHands);
 void display(struct card **players, int szPlayers, int current_player, int *szHands, struct card *discarded, bool rotation);
 char *color_card(struct card *c);
+void lowercase(char *);
 char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded);
-void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation);
+void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, struct card *discarded);
+int choose_color();
+void help();
 
 bool primo_turno = true; // le variabili globali non sono buone ma mi serviva per i +2 e +4
 
@@ -76,7 +79,7 @@ int main()
   {
     display(players, size_players, current_player, size_hands, discarded, rotation);
     char move = get_move(players, current_player, size_hands, discarded);
-    update(move, deck, &size_deck, players, &size_players, &current_player, &rotation);
+    update(move, deck, &size_deck, players, &size_players, size_hands, &current_player, &rotation, discarded);
   }
 
   return 0;
@@ -288,6 +291,17 @@ char *color_card(struct card *c)
   return colored_card;
 }
 
+void lowercase(char *str)
+{
+  // converte tutti i caratteri maiuscoli e minuscoli per le
+  while (*str)
+  {
+    if (*str >= 'A' && *str <= 'Z')
+      *str += 32;
+    str++;
+  }
+}
+
 char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded)
 {
   // +2 e +4
@@ -315,7 +329,7 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
   if (draw)
     return 'd';
 
-  printf("Seleziona la carta che intendi giocare, o seleziona 'aiuto' per consultare le regole: ");
+  printf("Seleziona la carta che intendi giocare,\no seleziona 'aiuto' per consultare le regole: ");
 
   char *move = (char *)malloc(sizeof(char) * 20);
 
@@ -330,12 +344,12 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
     scanf("%20[^\n]", move); // per leggere l'intera riga senza fermarsi agli spazi
     fflush(stdin);
 
+    lowercase(move);
+
     short spazi = 0;
     char *temp = move; // converte tutti i caratteri maiuscoli e minuscoli per le
     while (*temp)      // future comparazioni e controlla il numero di spazi
     {
-      if (*temp >= 'A' && *temp <= 'Z')
-        *temp += 32;
       if (*temp == ' ')
         spazi++;
       temp++;
@@ -390,6 +404,7 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
           chosen.color = y;
       }
 
+      free(move);
       // controlla la validità della mossa
       if (chosen.front && chosen.color != na)
       {
@@ -434,8 +449,81 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
   }
 }
 
-void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation)
+void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, struct card *discarded)
 {
-  printf("%c\n", move);
-  *(players + *current_player) = NULL;
+  struct card *player = *(players + *current_player); // leggibilità
+  int *szHand = (size_hands + *current_player);
+  int played = move - 48;
+  short stop = 0;
+  // help e pescate
+  switch (move)
+  {
+  case 'h':
+    help();
+    break;
+    // case 'p':
+    //   break;
+  }
+
+  // aggiorna il mazzo discard
+  *discarded = *(player + played);
+
+  // effetti delle carte
+  switch ((player + played)->front[0])
+  {
+  case 'S':
+    stop = 1;
+    break;
+  case 'R':
+    *rotation = !(*rotation);
+    break;
+  case 'C':
+    discarded->color = (enum col)choose_color();
+  }
+
+  // aggiorna la mano
+  for (int i = played; i < *szHand - 1; i++)
+    *(player + i) = *(player + i + 1);
+  (*szHand)--;
+
+  // passa il turno
+  if (*rotation)
+    *current_player = (*current_player < *szPlayers - 1 ? (*current_player + 1 + stop) : (0 + stop));
+  else
+    *current_player = (*current_player > 0 ? (*current_player - 1 - stop) : (*szPlayers - 1 - stop));
+  fflush(stdin);
+}
+
+int choose_color()
+{
+  printf("Scegli il colore della carta giocata: ");
+  char *color = (char *)malloc(sizeof(char) * 10);
+
+  int res = 0;
+  while (res == 0)
+  {
+    scanf("%s", color);
+    lowercase(color);
+    if (!strcmp(color, "rosso"))
+      res = 1;
+    else if (!strcmp(color, "verde"))
+      res = 2;
+    else if (!strcmp(color, "blu"))
+      res = 3;
+    else if (!strcmp(color, "giallo"))
+      res = 5;
+
+    if (res == 0)
+      printf("Seleziona un colore valido: ");
+  }
+  free(color);
+  return res;
+}
+
+void help()
+{
+  system(clear);
+  printf("\nPer selezionare la carta che vuoi giocare digitala nel formato *faccia* *colore*\n\n");
+  printf("Per consultare le regole del gioco:\n");
+  printf("https://www.wikihow.it/Giocare-a-UNO");
 }
