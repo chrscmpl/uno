@@ -44,7 +44,8 @@ struct card *find_empty_space(struct card *deck);
 struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *szHands);
 void display(struct card **players, int szPlayers, int current_player, int *szHands, struct card *discarded, bool rotation);
 char *color_card(struct card *c);
-void update(struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation);
+char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded);
+void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation);
 
 int main()
 {
@@ -72,8 +73,8 @@ int main()
   // quindi la condizione diventa falsa perchè (players + current_player) == NULL == 0
   {
     display(players, size_players, current_player, size_hands, discarded, rotation);
-    //  get_move();
-    update(deck, &size_deck, players, &size_players, &current_player, &rotation);
+    char move = get_move(players, current_player, size_hands, discarded);
+    update(move, deck, &size_deck, players, &size_players, &current_player, &rotation);
   }
 
   return 0;
@@ -216,9 +217,7 @@ void display(struct card **players, int szPlayers, int current_player, int *szHa
   }
 
   // mostra il verso di rotazione
-  printf("\nLa rotazione e' attualmente in senso %s", rotation ? "orario" : "antiorario");
-
-  printf("\n\n\n");
+  printf("\nLa rotazione e' attualmente in senso %s\n\n\n", rotation ? "orario" : "antiorario");
 
   for (int i = 0; i < (*(szHands + current_player)); i++) // aggiusta il mazzo discard più o meno
     printf("\t");                                         // al centro rispetto alla mano
@@ -232,7 +231,8 @@ void display(struct card **players, int szPlayers, int current_player, int *szHa
     printf("%s\t\t", colored_card);
   }
 
-  printf("%s\n\n", RESET);
+  printf("%s\n\n\n\n", RESET);
+  printf("Seleziona la carta che intendi giocare, o seleziona 'aiuto' per consultare le regole: ");
   free(colored_card);
 }
 
@@ -287,7 +287,104 @@ char *color_card(struct card *c)
   return colored_card;
 }
 
-void update(struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation)
+char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded)
+{
+  // in caso di nessuna mossa disponibile si pesca
+  bool draw = true;
+  for (int i = 0; i < *(size_hands + current_player); i++)
+  {
+    struct card temp = *(*(players + current_player) + i);
+    if (!strcmp(temp.front, discarded->front) || temp.color == discarded->color || temp.color == n)
+      draw = false;
+  }
+  if (draw)
+    return 'd';
+
+  char *move = (char *)malloc(sizeof(char) * 20);
+
+  while (true)
+  {
+    struct card chosen;
+    chosen.front[0] = '\0'; // inizializzazione variabile
+    chosen.color = na;
+
+    scanf("%20[^\n]", move); // per leggere l'intera riga senza fermarsi agli spazi
+
+    char *temp = move; // converte tutti i caratteri maiuscoli e minuscoli per le
+    while (*temp)      // future comparazioni
+    {
+      if (*temp >= 'A' && *temp <= 'Z')
+        *temp += 32;
+      temp++;
+    }
+
+    char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
+
+    // carte numero
+    if (*token >= '0' && *token <= '9' && *(token + 1) == '\0')
+      strcpy(chosen.front, token);
+    // carte +2 o +4
+    else if (*token == '+' && (*(token + 1) == '2' || *(token + 1) == '4') && *(token + 2) == '\0')
+    {
+      strcpy(chosen.front, token);
+      if (chosen.front[1] == '4')
+        chosen.color = n;
+    }
+    // carte speciali
+    else if (!strcmp(token, "reverse"))
+      strcpy(chosen.front, "R");
+    else if (!strcmp(token, "stop"))
+      strcpy(chosen.front, "S");
+    else if (!strcmp(token, "choose"))
+    {
+      strcpy(chosen.front, "C");
+      chosen.color = n;
+    }
+    // regolamento
+    else if (!strcmp(token, "aiuto"))
+      return 'h';
+
+    if (chosen.color == na)
+    {
+      token = strtok(NULL, "\n"); // prende la seconda parola, corrispondente al colore
+
+      if (!strcmp(token, "rosso"))
+        chosen.color = r;
+      else if (!strcmp(token, "verde"))
+        chosen.color = g;
+      else if (!strcmp(token, "blu"))
+        chosen.color = b;
+      else if (!strcmp(token, "giallo"))
+        chosen.color = y;
+    }
+
+    // controlla la validità della mossa
+    if (chosen.front && chosen.color != na)
+    {
+      if (chosen.front != discarded->front && chosen.color != discarded->color && chosen.color != n)
+      {
+        printf("La carta non è compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
+      }
+      else
+      {
+        for (int i = 0; i < *(size_hands + current_player); i++)
+        {
+          struct card temp = *(*(players + current_player) + i);
+          if (chosen.front == temp.front && chosen.color == temp.color)
+            return i + 48;
+        }
+
+        printf("Non hai quella carta, selezionane un'altra: ");
+      }
+    }
+    else
+    {
+      printf("Seleziona una mossa valida: ");
+    }
+  }
+}
+
+void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation)
 {
   *(players + *current_player) = NULL;
 }
