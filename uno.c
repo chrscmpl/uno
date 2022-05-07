@@ -232,7 +232,6 @@ void display(struct card **players, int szPlayers, int current_player, int *szHa
   }
 
   printf("%s\n\n\n\n", RESET);
-  printf("Seleziona la carta che intendi giocare, o seleziona 'aiuto' per consultare le regole: ");
   free(colored_card);
 }
 
@@ -300,6 +299,8 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
   if (draw)
     return 'd';
 
+  printf("Seleziona la carta che intendi giocare, o seleziona 'aiuto' per consultare le regole: ");
+
   char *move = (char *)malloc(sizeof(char) * 20);
 
   while (true)
@@ -327,7 +328,7 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
     if (!strcmp(move, "aiuto"))
       return 'h';
 
-    if (spazi == 1)
+    if (spazi == 1 || !strcmp(move, "choose") || strcmp(move, "+4")) // poichè per le nere non serve specificare il colore non ci sono spazi
     {
 
       char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
@@ -372,7 +373,7 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
       if (chosen.front && chosen.color != na)
       {
         // confronto con quella in cima al mazzo discard
-        if (strcmp(chosen.front, discarded->front) && chosen.color != discarded->color && chosen.color != n)
+        if (strcmp(chosen.front, discarded->front) && chosen.color != discarded->color && chosen.color != n && discarded->color != n)
         {
           printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
         }
