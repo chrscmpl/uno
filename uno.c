@@ -47,6 +47,8 @@ char *color_card(struct card *c);
 char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded);
 void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *current_player, bool *rotation);
 
+bool primo_turno = true; // le variabili globali non sono buone ma mi serviva per i +2 e +4
+
 int main()
 {
   srand(time(0)); // per valori randomici
@@ -288,8 +290,22 @@ char *color_card(struct card *c)
 
 char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded)
 {
+  // +2 e +4
+  bool draw = false;
+  if ((!strcmp(discarded->front, "+2") || !strcmp(discarded->front, "+4")) && !primo_turno)
+  {
+    draw = true;
+    for (int i = 0; i < *(size_hands + current_player); i++)
+    {
+      if (!strcmp((*(players + current_player) + i)->front, discarded->front))
+        draw = false;
+    }
+  }
+  if (draw)
+    return '+';
+
   // in caso di nessuna mossa disponibile si pesca
-  bool draw = true;
+  draw = true;
   for (int i = 0; i < *(size_hands + current_player); i++)
   {
     struct card temp = *(*(players + current_player) + i);
@@ -377,22 +393,33 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
       // controlla la validità della mossa
       if (chosen.front && chosen.color != na)
       {
-        // confronto con quella in cima al mazzo discard
-        if (strcmp(chosen.front, discarded->front) && chosen.color != discarded->color && chosen.color != n && discarded->color != n)
+        // si assicura che nel caso in cui ci sia un +2 o +4 e il giocatore possa rispondere lo faccia
+        if (((!strcmp(discarded->front, "+2") || !strcmp(discarded->front, "+4")) && strcmp(chosen.front, discarded->front)) && !primo_turno)
         {
-          printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
+          printf("Gioca il tuo %s", (strcmp(chosen.front, "+2") ? "+4" : "+2"));
         }
         else
         {
-          // confronto con quelle nella mano del giocatore
-          for (int i = 0; i < *(size_hands + current_player); i++)
+          // confronto con quella in cima al mazzo discard
+          if (strcmp(chosen.front, discarded->front) && chosen.color != discarded->color && chosen.color != n && discarded->color != n)
           {
-            struct card temp = *(*(players + current_player) + i);
-            if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
-              return i + 48;
+            printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
           }
+          else
+          {
+            // confronto con quelle nella mano del giocatore
+            for (int i = 0; i < *(size_hands + current_player); i++)
+            {
+              struct card temp = *(*(players + current_player) + i);
+              if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
+              {
+                primo_turno = false;
+                return i + 48;
+              }
+            }
 
-          printf("Non hai quella carta, selezionane un'altra: ");
+            printf("Non hai quella carta, selezionane un'altra: ");
+          }
         }
       }
       else
