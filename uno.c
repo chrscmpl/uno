@@ -308,73 +308,88 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
     chosen.front[0] = '\0'; // inizializzazione variabile
     chosen.color = na;
 
+    fflush(stdin);
     scanf("%20[^\n]", move); // per leggere l'intera riga senza fermarsi agli spazi
+    fflush(stdin);
 
+    short spazi = 0;
     char *temp = move; // converte tutti i caratteri maiuscoli e minuscoli per le
-    while (*temp)      // future comparazioni
+    while (*temp)      // future comparazioni e controlla il numero di spazi
     {
       if (*temp >= 'A' && *temp <= 'Z')
         *temp += 32;
+      if (*temp == ' ')
+        spazi++;
       temp++;
     }
 
-    char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
-
-    // carte numero
-    if (*token >= '0' && *token <= '9' && *(token + 1) == '\0')
-      strcpy(chosen.front, token);
-    // carte +2 o +4
-    else if (*token == '+' && (*(token + 1) == '2' || *(token + 1) == '4') && *(token + 2) == '\0')
+    if (spazi == 1)
     {
-      strcpy(chosen.front, token);
-      if (chosen.front[1] == '4')
-        chosen.color = n;
-    }
-    // carte speciali
-    else if (!strcmp(token, "reverse"))
-      strcpy(chosen.front, "R");
-    else if (!strcmp(token, "stop"))
-      strcpy(chosen.front, "S");
-    else if (!strcmp(token, "choose"))
-    {
-      strcpy(chosen.front, "C");
-      chosen.color = n;
-    }
-    // regolamento
-    else if (!strcmp(token, "aiuto"))
-      return 'h';
 
-    if (chosen.color == na)
-    {
-      token = strtok(NULL, "\n"); // prende la seconda parola, corrispondente al colore
+      char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
 
-      if (!strcmp(token, "rosso"))
-        chosen.color = r;
-      else if (!strcmp(token, "verde"))
-        chosen.color = g;
-      else if (!strcmp(token, "blu"))
-        chosen.color = b;
-      else if (!strcmp(token, "giallo"))
-        chosen.color = y;
-    }
-
-    // controlla la validità della mossa
-    if (chosen.front && chosen.color != na)
-    {
-      if (chosen.front != discarded->front && chosen.color != discarded->color && chosen.color != n)
+      // carte numero
+      if (*token >= '0' && *token <= '9' && *(token + 1) == '\0')
+        strcpy(chosen.front, token);
+      // carte +2 o +4
+      else if (*token == '+' && (*(token + 1) == '2' || *(token + 1) == '4') && *(token + 2) == '\0')
       {
-        printf("La carta non è compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
+        strcpy(chosen.front, token);
+        if (chosen.front[1] == '4')
+          chosen.color = n;
+      }
+      // carte speciali
+      else if (!strcmp(token, "reverse"))
+        strcpy(chosen.front, "R");
+      else if (!strcmp(token, "stop"))
+        strcpy(chosen.front, "S");
+      else if (!strcmp(token, "choose"))
+      {
+        strcpy(chosen.front, "C");
+        chosen.color = n;
+      }
+      // regolamento
+      else if (!strcmp(token, "aiuto"))
+        return 'h';
+
+      if (chosen.color == na)
+      {
+        token = strtok(NULL, " "); // prende la seconda parola, corrispondente al colore
+
+        if (!strcmp(token, "rosso"))
+          chosen.color = r;
+        else if (!strcmp(token, "verde"))
+          chosen.color = g;
+        else if (!strcmp(token, "blu"))
+          chosen.color = b;
+        else if (!strcmp(token, "giallo"))
+          chosen.color = y;
+      }
+
+      // controlla la validità della mossa
+      if (chosen.front && chosen.color != na)
+      {
+        if (chosen.front != discarded->front && chosen.color != discarded->color && chosen.color != n)
+        {
+          printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
+        }
+        else
+        {
+          for (int i = 0; i < *(size_hands + current_player); i++)
+          {
+            struct card temp = *(*(players + current_player) + i);
+            printf("mossa: %s %d\t", chosen.front, chosen.color);
+            printf("mano: %s %d\n", temp.front, temp.color);
+            if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
+              return i + 48;
+          }
+
+          printf("Non hai quella carta, selezionane un'altra: ");
+        }
       }
       else
       {
-        for (int i = 0; i < *(size_hands + current_player); i++)
-        {
-          struct card temp = *(*(players + current_player) + i);
-          if (chosen.front == temp.front && chosen.color == temp.color)
-            return i + 48;
-        }
-
-        printf("Non hai quella carta, selezionane un'altra: ");
+        printf("Seleziona una mossa valida: ");
       }
     }
     else
