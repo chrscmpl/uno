@@ -38,52 +38,80 @@ struct card
   enum col color;
 };
 
+typedef struct game_state
+{
+  struct card *Deck;
+  int SzDeck;
+
+  struct card **Players;
+  int SzPlayers;
+  int *SzHands;
+
+  int CurrentPlayer;
+  char move;
+
+  struct card DiscardDeck;
+
+  int Plus;
+  bool Rotation;
+  bool FirstTurn;
+} Game;
+
+// funzioni legate alla logica del gioco
+void Start(Game *);
+void shuffle(Game *);
 int get_players();
-struct card *shuffle();
-struct card *find_empty_space(struct card *deck);
-struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *szHands);
-void display(struct card **players, int szPlayers, int current_player, int *szHands, struct card *discarded, bool rotation);
-char *color_card(struct card *c);
+struct card *find_empty_space(Game *);
+void init_players(Game *);
+bool is_over(Game *);
+void update(Game *);
 void lowercase(char *);
-char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded);
-void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, short *plus, struct card *discarded);
+
+// funzioni legate all'interfaccia
+void display(Game *);
+char *displayed_card(struct card *c);
+void get_move(Game *);
 int choose_color();
 void help();
 
-bool primo_turno = true; // le variabili globali non sono buone ma mi serviva per i +2 e +4
-
 int main()
+{
+  Game *game;
+  game = (Game *)malloc(sizeof(Game));
+
+  Start(game);
+
+  // loop del gioco
+  while (!is_over(game))
+  {
+    display(game);
+    get_move(game);
+    update(game);
+  }
+
+  return 0;
+}
+
+void Start(Game *game)
 {
   srand(time(0)); // per valori randomici
 
   // inizializazione mazzo principale
-  struct card *deck = shuffle();
-  int size_deck = SIZE_DECK;
+  game->Deck = (struct card *)malloc(sizeof(struct card) * SIZE_DECK);
+  game->SzDeck = SIZE_DECK;
+  shuffle(game);
 
   // inizializzazione mani dei giocatori
-  int size_players = get_players();
-  int *size_hands = (int *)malloc(sizeof(int) * size_players);
-  struct card **players = init_players(deck, &size_deck, size_players, size_hands);
+  game->SzPlayers = get_players();
+  init_players(game);
 
-  // variabili necessarie per il gioco
-  int current_player = 0;
-  bool rotation = true; // true = sinistra; false = destra;
-  struct card *discarded;
-  size_deck--;
-  discarded = (deck + size_deck);
-  short plus = 0;
-
-  // loop del gioco
-  while (*(players + current_player))
-  // quando il gioco finisce il mazzo del current_player viene deallocato e portato a NULL
-  // quindi la condizione diventa falsa perchè (players + current_player) == NULL == 0
-  {
-    display(players, size_players, current_player, size_hands, discarded, rotation);
-    char move = get_move(players, current_player, size_hands, discarded);
-    update(move, deck, &size_deck, players, &size_players, size_hands, &current_player, &rotation, &plus, discarded);
-  }
-
-  return 0;
+  // inizializzazione variabili
+  game->CurrentPlayer = 0;
+  game->Rotation = true; // true = sinistra; false = destra;
+  game->SzDeck--;
+  game->DiscardDeck = *(game->Deck + game->SzDeck);
+  game->Plus = 0;
+  game->FirstTurn = true;
 }
 
 // richiede dalla tastiera l'inserimento del numero di giocatori
@@ -102,14 +130,11 @@ int get_players()
 }
 
 // inizializza il mazzo principale
-struct card *shuffle()
+void shuffle(Game *game)
 {
-  struct card *deck = (struct card *)malloc(sizeof(struct card) * SIZE_DECK);
 
-  for (int i = 0; i < SIZE_DECK; i++) // inizializza il mazzo
-  {
-    (deck + i)->color = na;
-  }
+  for (int i = 0; i < game->SzDeck; i++) // inizializza il mazzo
+    (game->Deck + i)->color = na;
 
   for (int c = 1; c < 5; c++) // per ogni colore
   {
@@ -118,7 +143,7 @@ struct card *shuffle()
     {
       for (int j = 0; j == 0 || (j == 1 && i != 0); j++) // c'è solo uno zero per colore
       {
-        struct card *pos = find_empty_space(deck);
+        struct card *pos = find_empty_space(game);
         pos->color = (enum col)c;
         pos->front[0] = i + 48; // ascii
         pos->front[1] = '\0';
@@ -128,7 +153,7 @@ struct card *shuffle()
     // carte stop
     for (int i = 0; i < 2; i++)
     {
-      struct card *pos = find_empty_space(deck);
+      struct card *pos = find_empty_space(game);
       pos->color = (enum col)c;
       strcpy(pos->front, "S");
     }
@@ -136,7 +161,7 @@ struct card *shuffle()
     // carte reverse
     for (int i = 0; i < 2; i++)
     {
-      struct card *pos = find_empty_space(deck);
+      struct card *pos = find_empty_space(game);
       pos->color = (enum col)c;
       strcpy(pos->front, "R");
     }
@@ -144,7 +169,7 @@ struct card *shuffle()
     // carte +2
     for (int i = 0; i < 2; i++)
     {
-      struct card *pos = find_empty_space(deck);
+      struct card *pos = find_empty_space(game);
       pos->color = (enum col)c;
       strcpy(pos->front, "+2");
     }
@@ -153,7 +178,7 @@ struct card *shuffle()
   // carte nere choose
   for (int i = 0; i < 4; i++)
   {
-    struct card *pos = find_empty_space(deck);
+    struct card *pos = find_empty_space(game);
     pos->color = n;
     strcpy(pos->front, "C");
   }
@@ -161,79 +186,83 @@ struct card *shuffle()
   // carte nere +4
   for (int i = 0; i < 4; i++)
   {
-    struct card *pos = find_empty_space(deck);
+    struct card *pos = find_empty_space(game);
     pos->color = n;
     strcpy(pos->front, "+4");
   }
-
-  return deck;
 }
 
 // cerca spazi vuoti nel mazzo
-struct card *find_empty_space(struct card *deck)
+struct card *find_empty_space(Game *game)
 {
   struct card *space;
   do
   {
-    space = (deck + (rand() % SIZE_DECK));
+    space = (game->Deck + (rand() % game->SzDeck));
   } while (space->color != na);
   return space;
 }
 
 // inizializza i mazzi dei giocatori
-struct card **init_players(struct card *deck, int *szDeck, int szPlayers, int *szHands)
+void init_players(Game *game)
 {
   // inizializza l'array di mazzi
-  struct card **players = (struct card **)malloc(sizeof(struct card *) * szPlayers);
+  game->Players = (struct card **)malloc(sizeof(struct card *) * game->SzPlayers);
 
-  // inizializza i singoli mazzi
-  for (int i = 0; i < szPlayers; i++)
-    *(players + i) = (struct card *)malloc(sizeof(struct card) * (*szDeck)); // alloca lo spazio necessario
+  // inizializza le singole mani
+  for (int i = 0; i < game->SzPlayers; i++)
+    *(game->Players + i) = (struct card *)malloc(sizeof(struct card) * game->SzDeck); // alloca lo spazio necessario
 
-  for (int i = 0; i < szPlayers; i++) // pesca carte dal mazzo
+  for (int i = 0; i < game->SzPlayers; i++) // pesca carte dal mazzo
     for (int j = 0; j < STARTING_HAND_SIZE; j++)
     {
-      (*szDeck)--;
-      ((*(players + i)) + j)->color = (deck + (*szDeck))->color;
-      strcpy((*(players + i) + j)->front, (deck + (*szDeck))->front);
+      game->SzDeck--;
+      ((*(game->Players + i)) + j)->color = (game->Deck + game->SzDeck)->color;
+      strcpy((*(game->Players + i) + j)->front, (game->Deck + game->SzDeck)->front);
     }
 
-  for (int i = 0; i < szPlayers; i++)
-    *(szHands + i) = STARTING_HAND_SIZE;
-
-  return players;
+  // inizializza le dimensioni delle mani
+  game->SzHands = (int *)malloc(sizeof(int) * game->SzPlayers);
+  for (int i = 0; i < game->SzPlayers; i++)
+    *(game->SzHands + i) = STARTING_HAND_SIZE;
 }
 
+bool is_over(Game *game)
+{
+  // quando il gioco finisce il mazzo del current_player viene deallocato e portato a NULL
+  // quindi la condizione diventa falsa perchè (players + current_player) == NULL == 0
+  return !(*(game->Players + game->CurrentPlayer));
+}
 // stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
-void display(struct card **players, int szPlayers, int current_player, int *szHands, struct card *discarded, bool rotation)
+void display(Game *game)
 {
   system(clear);
 
-  printf("Turno del Giocatore %d\n\n", current_player + 1); // mostra il numero del giocatore corrente
+  printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
 
   // mostra il numero di carte nelle mani degli avversari, nell'ordine della rotazione
-  for (int i = rotation ? 0 : (szPlayers - 1); (rotation && (i < szPlayers)) || (!rotation && (i >= 0));)
+  for (int i = game->Rotation ? 0 : (game->SzPlayers - 1); (game->Rotation && (i < game->SzPlayers)) || (!game->Rotation && (i >= 0));)
   {
-    if (i != current_player)
-      printf("il giocatore %d ha %d carte nella sua mano\n", i + 1, *(szHands + i));
-    if (rotation)
+    if (i != game->CurrentPlayer)
+      printf("il giocatore %d ha %d carte nella sua mano\n", i + 1, *(game->SzHands + i));
+    if (game->Rotation)
       i++;
     else
       i--;
   }
 
   // mostra il verso di rotazione
-  printf("\nLa rotazione e' attualmente in senso %s\n\n\n", rotation ? "orario" : "antiorario");
+  printf("\nLa rotazione e' attualmente in senso %s\n\n\n", game->Rotation ? "orario" : "antiorario");
 
-  for (int i = 0; i < (*(szHands + current_player)); i++) // aggiusta il mazzo discard più o meno
-    printf("\t");                                         // al centro rispetto alla mano
+  for (int i = 0; i < (*(game->SzHands + game->CurrentPlayer)); i++) // aggiusta il mazzo discard più o meno
+    printf("\t");                                                    // al centro rispetto alla mano
 
-  char *colored_card = color_card(discarded); // la carta in cima al mazzo discard
+  char *colored_card = displayed_card(&game->DiscardDeck); // la carta in cima al mazzo discard
   printf("%s\n\n\n\n\n\t", colored_card);
 
-  for (int i = 0; i < (*(szHands + current_player)); i++) // mostra la mano del giocatore
+  for (int i = 0; i < (*(game->SzHands + game->CurrentPlayer)); i++) // mostra la mano del giocatore
   {
-    colored_card = color_card(*(players + current_player) + i);
+    colored_card = displayed_card(*(game->Players + game->CurrentPlayer) + i);
     printf("%s\t\t", colored_card);
   }
 
@@ -243,7 +272,7 @@ void display(struct card **players, int szPlayers, int current_player, int *szHa
 
 // converte una carta in una stringa che ha come prefisso la sequenza di escape
 // corrispondente al suo colore
-char *color_card(struct card *c)
+char *displayed_card(struct card *c)
 {
   // imposta il colore
   char color[6];
@@ -303,32 +332,38 @@ void lowercase(char *str)
   }
 }
 
-char get_move(struct card **players, int current_player, int *size_hands, struct card *discarded)
+void get_move(Game *game)
 {
   // +2 e +4
   bool draw = false;
-  if ((!strcmp(discarded->front, "+2") || !strcmp(discarded->front, "+4")) && !primo_turno)
+  if ((!strcmp(game->DiscardDeck.front, "+2") || !strcmp(game->DiscardDeck.front, "+4")) && !game->FirstTurn)
   {
     draw = true;
-    for (int i = 0; i < *(size_hands + current_player); i++)
+    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
     {
-      if (!strcmp((*(players + current_player) + i)->front, discarded->front))
+      if (!strcmp((*(game->Players + game->CurrentPlayer) + i)->front, game->DiscardDeck.front))
         draw = false;
     }
   }
   if (draw)
-    return '+';
+  {
+    game->move = '+';
+    return;
+  }
 
   // in caso di nessuna mossa disponibile si pesca
   draw = true;
-  for (int i = 0; i < *(size_hands + current_player); i++)
+  for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
   {
-    struct card temp = *(*(players + current_player) + i);
-    if (!strcmp(temp.front, discarded->front) || temp.color == discarded->color || temp.color == n)
+    struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
+    if (!strcmp(temp.front, game->DiscardDeck.front) || temp.color == game->DiscardDeck.color || temp.color == n)
       draw = false;
   }
   if (draw)
-    return 'd';
+  {
+    game->move = 'd';
+    return;
+  }
 
   printf("Seleziona la carta che intendi giocare,\no seleziona 'aiuto' per consultare le regole: ");
 
@@ -358,11 +393,17 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
 
     // regolamento
     if (!strcmp(move, "aiuto"))
-      return 'h';
+    {
+      game->move = 'h';
+      return;
+    }
 
     // ricorda di dire Uno!
-    if (strcmp(move, "uno") && *(size_hands + current_player) == 1)
-      return 'u';
+    if (strcmp(move, "uno") && *(game->SzHands + game->CurrentPlayer) == 1)
+    {
+      game->move = 'u';
+      return;
+    }
 
     if (spazi == 1 || !strcmp(move, "choose") || !strcmp(move, "+4")) // poichè per le nere non serve specificare il colore non ci sono spazi
     {
@@ -410,27 +451,28 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
       if (chosen.front && chosen.color != na)
       {
         // si assicura che nel caso in cui ci sia un +2 o +4 e il giocatore possa rispondere lo faccia
-        if (((!strcmp(discarded->front, "+2") || !strcmp(discarded->front, "+4")) && strcmp(chosen.front, discarded->front)) && !primo_turno)
+        if (((!strcmp(game->DiscardDeck.front, "+2") || !strcmp(game->DiscardDeck.front, "+4")) && strcmp(chosen.front, game->DiscardDeck.front)) && !game->FirstTurn)
         {
           printf("Gioca il tuo %s", (strcmp(chosen.front, "+2") ? "+4" : "+2"));
         }
         else
         {
           // confronto con quella in cima al mazzo discard
-          if (strcmp(chosen.front, discarded->front) && chosen.color != discarded->color && chosen.color != n && discarded->color != n)
+          if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
           {
             printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
           }
           else
           {
             // confronto con quelle nella mano del giocatore
-            for (int i = 0; i < *(size_hands + current_player); i++)
+            for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
             {
-              struct card temp = *(*(players + current_player) + i);
+              struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
               if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
               {
-                primo_turno = false;
-                return i + 48;
+                game->FirstTurn = false;
+                game->move = i + 48;
+                return;
               }
             }
 
@@ -450,14 +492,14 @@ char get_move(struct card **players, int current_player, int *size_hands, struct
   }
 }
 
-void update(char move, struct card *deck, int *szDeck, struct card **players, int *szPlayers, int *size_hands, int *current_player, bool *rotation, short *plus, struct card *discarded)
+void update(Game *game)
 {
-  struct card *player = *(players + *current_player); // leggibilità
-  int *szHand = (size_hands + *current_player);
-  int played = move - 48;
+  struct card *player = *(game->Players + game->CurrentPlayer); // leggibilità
+  int *szHand = (game->SzHands + game->CurrentPlayer);
+  int played = game->move - 48;
   short stop = 0;
   // help e pescate
-  switch (move)
+  switch (game->move)
   {
   case 'h':
     help();
@@ -469,7 +511,7 @@ void update(char move, struct card *deck, int *szDeck, struct card **players, in
   }
 
   // aggiorna il mazzo discard
-  *discarded = *(player + played);
+  game->DiscardDeck = *(player + played);
 
   // effetti delle carte
   switch ((player + played)->front[0])
@@ -478,15 +520,15 @@ void update(char move, struct card *deck, int *szDeck, struct card **players, in
     stop = 1;
     break;
   case 'R':
-    *rotation = !(*rotation);
+    game->Rotation = !game->Rotation;
     break;
   case 'C':
-    discarded->color = (enum col)choose_color();
+    game->DiscardDeck.color = (enum col)choose_color();
     break;
   case '+':
     if ((player + played)->front[1] == '4')
-      discarded->color = (enum col)choose_color();
-    plus += (player + played)->front[1] - 48;
+      game->DiscardDeck.color = (enum col)choose_color();
+    game->Plus += (player + played)->front[1] - 48;
   }
 
   // aggiorna la mano
@@ -499,10 +541,10 @@ void update(char move, struct card *deck, int *szDeck, struct card **players, in
     player = NULL;
 
   // passa il turno
-  if (*rotation)
-    *current_player = (*current_player < *szPlayers - 1 ? (*current_player + 1 + stop) : (0 + stop));
+  if (game->Rotation)
+    game->CurrentPlayer = (game->CurrentPlayer < game->SzPlayers - 1 ? (game->CurrentPlayer + 1 + stop) : (0 + stop));
   else
-    *current_player = (*current_player > 0 ? (*current_player - 1 - stop) : (*szPlayers - 1 - stop));
+    game->CurrentPlayer = (game->CurrentPlayer > 0 ? (game->CurrentPlayer - 1 - stop) : (game->SzPlayers - 1 - stop));
   fflush(stdin);
 }
 
