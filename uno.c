@@ -7,7 +7,7 @@
 #define SIZE_DECK 108
 #define STARTING_HAND_SIZE 7
 
-// caratteri di escape corrispondenti ai varii colori
+// caratteri di escape corrispondenti ai vari colori
 #define RED "\x1b[31m"
 #define GREEN "\x1b[32m"
 #define BLUE "\x1b[34m"
@@ -48,7 +48,7 @@ typedef struct game_state
   int *SzHands;
 
   int CurrentPlayer;
-  char move;
+  char Move;
 
   struct card DiscardDeck;
 
@@ -69,7 +69,7 @@ void lowercase(char *);
 
 // funzioni legate all'interfaccia
 void display(Game *);
-char *displayed_card(struct card *c);
+const char *displayed_card(struct card *c);
 void get_move(Game *);
 int choose_color();
 void help();
@@ -229,7 +229,7 @@ void init_players(Game *game)
 
 bool is_over(Game *game)
 {
-  // quando il gioco e le sue variabili vengono deallocate e game impostato a NULL che vale 0
+  // finito il gioco game e le sue variabili vengono deallocate e game impostato a NULL che vale 0
   return !game;
 }
 // stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
@@ -256,22 +256,18 @@ void display(Game *game)
   for (int i = 0; i < (*(game->SzHands + game->CurrentPlayer)); i++) // aggiusta il mazzo discard più o meno
     printf("\t");                                                    // al centro rispetto alla mano
 
-  char *colored_card = displayed_card(&game->DiscardDeck); // la carta in cima al mazzo discard
-  printf("%s\n\n\n\n\n\t", colored_card);
+  // la carta in cima al mazzo discard
+  printf("%s\n\n\n\n\n\t", displayed_card(&game->DiscardDeck));
 
   for (int i = 0; i < (*(game->SzHands + game->CurrentPlayer)); i++) // mostra la mano del giocatore
-  {
-    colored_card = displayed_card(*(game->Players + game->CurrentPlayer) + i);
-    printf("%s\t\t", colored_card);
-  }
+    printf("%s\t\t", displayed_card(*(game->Players + game->CurrentPlayer) + i));
 
   printf("%s\n\n\n\n", RESET);
-  free(colored_card);
 }
 
 // converte una carta in una stringa che ha come prefisso la sequenza di escape
 // corrispondente al suo colore
-char *displayed_card(struct card *c)
+const char *displayed_card(struct card *c)
 {
   // imposta il colore
   char color[6];
@@ -311,8 +307,7 @@ char *displayed_card(struct card *c)
   }
 
   // compone la stringa
-  char *colored_card;
-  colored_card = (char *)malloc(sizeof(char) * ((face ? strlen(face) : 2) + strlen(color)));
+  static char colored_card[13];
   strcpy(colored_card, color);
   strcat(colored_card, (face ? face : c->front));
 
@@ -346,8 +341,8 @@ void get_move(Game *game)
   }
   if (draw)
   {
-    // game->move = '+';
-    game->move = '0';
+    // game->Move = '+';
+    game->Move = '0';
     return;
   }
 
@@ -361,8 +356,8 @@ void get_move(Game *game)
   }
   if (draw)
   {
-    // game->move = 'd';
-    game->move = '0';
+    // game->Move = 'd';
+    game->Move = '0';
     return;
   }
 
@@ -395,16 +390,16 @@ void get_move(Game *game)
     // regolamento
     if (!strcmp(move, "aiuto"))
     {
-      // game->move = 'h';
-      game->move = '0';
+      // game->Move = 'h';
+      game->Move = '0';
       return;
     }
 
     // ricorda di dire Uno!
     if (strcmp(move, "uno") && *(game->SzHands + game->CurrentPlayer) == 1)
     {
-      // game->move = 'u';
-      game->move = '0';
+      // game->Move = 'u';
+      game->Move = '0';
       return;
     }
 
@@ -474,7 +469,7 @@ void get_move(Game *game)
               if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
               {
                 game->FirstTurn = false;
-                game->move = i + 48;
+                game->Move = i + 48;
                 return;
               }
             }
@@ -499,10 +494,10 @@ void update(Game *game)
 {
   struct card *player = *(game->Players + game->CurrentPlayer); // leggibilità
   int *szHand = (game->SzHands + game->CurrentPlayer);
-  int played = game->move - 48;
+  int played = game->Move - 48;
   short stop = 0;
   // help e pescate
-  switch (game->move)
+  switch (game->Move)
   {
   case 'h':
     help();
@@ -557,6 +552,7 @@ void update(Game *game)
       game->CurrentPlayer += game->SzPlayers;
   }
   fflush(stdin);
+  game->Move = ' ';
 }
 
 int choose_color()
