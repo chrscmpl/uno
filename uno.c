@@ -229,9 +229,8 @@ void init_players(Game *game)
 
 bool is_over(Game *game)
 {
-  // quando il gioco finisce il mazzo del current_player viene deallocato e portato a NULL
-  // quindi la condizione diventa falsa perchè (players + current_player) == NULL == 0
-  return !(*(game->Players + game->CurrentPlayer));
+  // quando il gioco e le sue variabili vengono deallocate e game impostato a NULL che vale 0
+  return !game;
 }
 // stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
 void display(Game *game)
@@ -347,7 +346,8 @@ void get_move(Game *game)
   }
   if (draw)
   {
-    game->move = '+';
+    // game->move = '+';
+    game->move = '0';
     return;
   }
 
@@ -361,7 +361,8 @@ void get_move(Game *game)
   }
   if (draw)
   {
-    game->move = 'd';
+    // game->move = 'd';
+    game->move = '0';
     return;
   }
 
@@ -394,14 +395,16 @@ void get_move(Game *game)
     // regolamento
     if (!strcmp(move, "aiuto"))
     {
-      game->move = 'h';
+      // game->move = 'h';
+      game->move = '0';
       return;
     }
 
     // ricorda di dire Uno!
     if (strcmp(move, "uno") && *(game->SzHands + game->CurrentPlayer) == 1)
     {
-      game->move = 'u';
+      // game->move = 'u';
+      game->move = '0';
       return;
     }
 
@@ -453,7 +456,7 @@ void get_move(Game *game)
         // si assicura che nel caso in cui ci sia un +2 o +4 e il giocatore possa rispondere lo faccia
         if (((!strcmp(game->DiscardDeck.front, "+2") || !strcmp(game->DiscardDeck.front, "+4")) && strcmp(chosen.front, game->DiscardDeck.front)) && !game->FirstTurn)
         {
-          printf("Gioca il tuo %s", (strcmp(chosen.front, "+2") ? "+4" : "+2"));
+          printf("Gioca il tuo %s: ", (strcmp(chosen.front, "+2") ? "+4" : "+2"));
         }
         else
         {
@@ -542,9 +545,17 @@ void update(Game *game)
 
   // passa il turno
   if (game->Rotation)
-    game->CurrentPlayer = (game->CurrentPlayer < game->SzPlayers - 1 ? (game->CurrentPlayer + 1 + stop) : (0 + stop));
+  {
+    game->CurrentPlayer += 1 + stop;
+    if (game->CurrentPlayer >= game->SzPlayers)
+      game->CurrentPlayer -= game->SzPlayers;
+  }
   else
-    game->CurrentPlayer = (game->CurrentPlayer > 0 ? (game->CurrentPlayer - 1 - stop) : (game->SzPlayers - 1 - stop));
+  {
+    game->CurrentPlayer -= 1 + stop;
+    if (game->CurrentPlayer < 0)
+      game->CurrentPlayer += game->SzPlayers;
+  }
   fflush(stdin);
 }
 
