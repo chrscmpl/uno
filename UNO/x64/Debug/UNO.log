@@ -1,0 +1,5 @@
+﻿  main.c
+  UNO.c
+C:\Users\ilpac\Workspace\UNO\UNO\UNO.c(5,15): warning C4244: 'function': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Generating Code...
+  UNO.vcxproj -> C:\Users\ilpac\Workspace\UNO\x64\Debug\UNO.exe
