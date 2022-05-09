@@ -415,6 +415,9 @@ void update(Game *game)
         help();
         return;
     case 'd':
+        draw(game, 1);
+        void next_turn(game);
+        return;
     case 'u':
     case '+':
         return;
@@ -441,30 +444,51 @@ void update(Game *game)
         game->Plus += (player + played)->front[1] - 48;
     }
 
-    // aggiorna la mano
-    for (int i = played; i < *szHand - 1; i++)
-        *(player + i) = *(player + i + 1);
-    (*szHand)--;
+    remove_from_hand(game, played);
 
     // controlla vittoria
     if (!(*szHand))
         player = NULL;
 
-    // passa il turno
+    void next_turn(game);
+
+    fflush(stdin);
+    game->Move = ' ';
+}
+
+// passa il turno
+void next_turn(Game* game) {
     if (game->Rotation)
     {
-        game->CurrentPlayer += 1 + stop;
+        game->CurrentPlayer += 1;
         if (game->CurrentPlayer >= game->SzPlayers)
             game->CurrentPlayer -= game->SzPlayers;
     }
     else
     {
-        game->CurrentPlayer -= 1 + stop;
+        game->CurrentPlayer -= 1;
         if (game->CurrentPlayer < 0)
             game->CurrentPlayer += game->SzPlayers;
     }
-    fflush(stdin);
-    game->Move = ' ';
+}
+
+// aggiorna la mano
+void remove_from_hand(Game* game, int played) {
+    for (int i = played; i < *(game->SzHands + game->CurrentPlayer) - 1; i++)
+        *((game->Players + game->CurrentPlayer) + i) = *((game->Players + game->CurrentPlayer) + i + 1);
+    (*(game->SzHands + game->CurrentPlayer))--;
+}
+
+void draw(Game* game, int n)
+{
+    while (n > 0) {
+        
+        n--;
+    }
+}
+
+void show_drawn(Game* game, int n)
+{
 }
 
 int choose_color()
