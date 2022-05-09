@@ -254,8 +254,7 @@ void get_move(Game *game)
     // in caso di nessuna mossa disponibile si pesca
     if (check_draw(game))
     {
-        // game->Move = 'd';
-        game->Move = '0';
+        game->Move = 'd';
         return;
     }
     
@@ -328,7 +327,7 @@ struct card chosen_card()
     // regolamento
     if (!strcmp(move, "aiuto"))
     {
-        chosen.front[0] == 'h';
+        chosen.front[0] = 'h';
         return chosen;
     }
 
@@ -407,7 +406,7 @@ void update(Game *game)
     struct card *player = *(game->Players + game->CurrentPlayer); // leggibilità
     int *szHand = (game->SzHands + game->CurrentPlayer);
     int played = game->Move - 48;
-    short stop = 0;
+    bool stop = false;
     // help e pescate
     switch (game->Move)
     {
@@ -416,7 +415,7 @@ void update(Game *game)
         return;
     case 'd':
         draw(game, 1);
-        void next_turn(game);
+        next_turn(game);
         return;
     case 'u':
     case '+':
@@ -430,7 +429,7 @@ void update(Game *game)
     switch ((player + played)->front[0])
     {
     case 'S':
-        stop = 1;
+        stop = true;
         break;
     case 'R':
         game->Rotation = !game->Rotation;
@@ -450,7 +449,10 @@ void update(Game *game)
     if (!(*szHand))
         player = NULL;
 
-    void next_turn(game);
+    next_turn(game);
+
+    if (stop)
+        next_turn(game);
 
     fflush(stdin);
     game->Move = ' ';
@@ -460,13 +462,13 @@ void update(Game *game)
 void next_turn(Game* game) {
     if (game->Rotation)
     {
-        game->CurrentPlayer += 1;
+        game->CurrentPlayer++;
         if (game->CurrentPlayer >= game->SzPlayers)
             game->CurrentPlayer -= game->SzPlayers;
     }
     else
     {
-        game->CurrentPlayer -= 1;
+        game->CurrentPlayer--;
         if (game->CurrentPlayer < 0)
             game->CurrentPlayer += game->SzPlayers;
     }
@@ -474,21 +476,40 @@ void next_turn(Game* game) {
 
 // aggiorna la mano
 void remove_from_hand(Game* game, int played) {
+
     for (int i = played; i < *(game->SzHands + game->CurrentPlayer) - 1; i++)
         *((game->Players + game->CurrentPlayer) + i) = *((game->Players + game->CurrentPlayer) + i + 1);
+
     (*(game->SzHands + game->CurrentPlayer))--;
 }
 
 void draw(Game* game, int n)
 {
     while (n > 0) {
-        
+
+        // aumenta la dimensione della mano
+        (* (game->SzHands + game->CurrentPlayer))++;
+
+        // copia la carta in cima al mazzo nella mano del giocatore
+        game->SzDeck--;
+
+        *( *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer)) = *(game->Deck + game->SzDeck);
+
         n--;
     }
+
+    show_drawn(game, n);
 }
 
 void show_drawn(Game* game, int n)
-{
+{   
+    printf("Hai pescato %s:\n", (n > 1 ? "le seguenti carte" : "la seguente carta"));
+    struct card* p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer);
+    for (int i = 0; i < n; i++) {
+        printf("%s\t\t", displayed_card(p));
+        p--;
+    }
+    system("pause");
 }
 
 int choose_color()
@@ -512,7 +533,7 @@ int choose_color()
             res = 5;
 
         if (res == 0)
-            printf("%s, Seleziona un colore valido: ", color);
+            printf("Seleziona un colore valido: ");
     }
     free(color);
     return res;
