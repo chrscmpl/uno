@@ -30,6 +30,7 @@ int get_players()
     while (p < 2 || p > 4)
     {
         scanf("%d", &p);
+        clean_stdin();
         if (p < 2 || p > 4)
             printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 2 e 4: ");
     }
@@ -178,7 +179,7 @@ void display(Game *game)
 const char *displayed_card(struct card *c)
 {
     // imposta il colore
-    char color[6];
+    char color[6] = RESET;
     switch (c->color)
     {
     case r:
@@ -237,41 +238,22 @@ void lowercase(char *str)
 void get_move(Game *game)
 {
     // +2 e +4
-    bool draw = false;
-    if ((!strcmp(game->DiscardDeck.front, "+2") || !strcmp(game->DiscardDeck.front, "+4")) && !game->FirstTurn)
-    {
-        draw = true;
-        for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
-        {
-            if (!strcmp((*(game->Players + game->CurrentPlayer) + i)->front, game->DiscardDeck.front))
-                draw = false;
-        }
-    }
-    if (draw)
-    {
-        // game->Move = '+';
-        game->Move = '0';
+    if (game->Plus) {
+        plus(game);
         return;
     }
 
     // in caso di nessuna mossa disponibile si pesca
-    draw = true;
-    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
-    {
-        struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
-        if (!strcmp(temp.front, game->DiscardDeck.front) || temp.color == game->DiscardDeck.color || temp.color == n)
-            draw = false;
-    }
-    if (draw)
+    if (check_draw(game))
     {
         // game->Move = 'd';
         game->Move = '0';
         return;
     }
 
-    printf("Seleziona la carta che intendi giocare,\no seleziona 'aiuto' per consultare le regole: ");
+    printf("Seleziona la carta che intendi giocare,\noppure digita 'aiuto' per consultare le regole: ");
 
-    char *move = (char *)malloc(sizeof(char) * 20);
+    char move[20];
 
     while (true)
     {
@@ -279,12 +261,7 @@ void get_move(Game *game)
         chosen.front[0] = '\0'; // inizializzazione variabile
         chosen.color = na;
 
-        fflush(stdin); // mi ha salvato da un loop infinito
-
-        scanf("%20[^\n]", move); // per leggere l'intera riga senza fermarsi agli spazi
-        fflush(stdin);
-
-        lowercase(move);
+        strcpy(move, read_words());
 
         short spazi = 0;
         char *temp = move; // converte tutti i caratteri maiuscoli e minuscoli per le
@@ -352,7 +329,6 @@ void get_move(Game *game)
                     chosen.color = y;
             }
 
-            free(move);
             // controlla la validità della mossa
             if (chosen.front && chosen.color != na)
             {
@@ -398,6 +374,17 @@ void get_move(Game *game)
     }
 }
 
+const char* read_words() {
+    static char move[20];
+
+    scanf("%20[^\n]", move); // per leggere l'intera riga senza fermarsi agli spazi
+    clean_stdin();
+
+    lowercase(move);
+
+    return move;
+}
+
 void update(Game *game)
 {
     struct card *player = *(game->Players + game->CurrentPlayer); // leggibilità
@@ -409,7 +396,7 @@ void update(Game *game)
     {
     case 'h':
         help();
-        break;
+        return;
     case 'd':
     case 'u':
     case '+':
@@ -472,6 +459,7 @@ int choose_color()
     while (res == 0)
     {
         scanf("%s", color);
+        clean_stdin();
         lowercase(color);
         if (!strcmp(color, "rosso"))
             res = 1;
@@ -483,10 +471,38 @@ int choose_color()
             res = 5;
 
         if (res == 0)
-            printf("Seleziona un colore valido: ");
+            printf("%s, Seleziona un colore valido: ", color);
     }
     free(color);
     return res;
+}
+
+void plus(Game* game) {
+    bool draw = false;
+    draw = true;
+    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
+    {
+        if (!strcmp((*(game->Players + game->CurrentPlayer) + i)->front, game->DiscardDeck.front))
+            draw = false;
+    }
+
+    if (draw)
+    {
+        // game->Move = '+';
+        game->Move = '+';
+        return;
+    }
+}
+
+bool check_draw(Game* game) {
+    bool draw = true;
+    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
+    {
+        struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
+        if (!strcmp(temp.front, game->DiscardDeck.front) || temp.color == game->DiscardDeck.color || temp.color == n)
+            draw = false;
+    }
+    return draw;
 }
 
 void help()
@@ -495,4 +511,12 @@ void help()
     printf("\nPer selezionare la carta che vuoi giocare digitala nel formato *faccia* *colore*\n\n");
     printf("Per consultare le regole del gioco:\n");
     printf("https://www.wikihow.it/Giocare-a-UNO");
+}
+
+void clean_stdin()
+{
+    char c;
+    do {
+        c = getchar();
+    } while (c != '\n' && c != EOF);
 }

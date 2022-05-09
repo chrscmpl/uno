@@ -64,12 +64,16 @@ int get_players();
 struct card *find_empty_space(Game *);
 void init_players(Game *);
 bool is_over(Game *);
+void plus(Game*);
 void update(Game *);
+bool check_draw(Game*);
 void lowercase(char *);
 
 // funzioni legate all'interfaccia
 void display(Game *);
 const char *displayed_card(struct card *c);
 void get_move(Game *);
+const char* read_words();
 int choose_color();
 void help();
+void clean_stdin();
