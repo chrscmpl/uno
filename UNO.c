@@ -235,10 +235,18 @@ void lowercase(char *str)
     }
 }
 
+//  imposta il valore di game->move
+//  - a 'd' se bisogna pescare
+//  - ad 'u' se non si è detto uno quando si doveva
+//  - ad 'h' se è stato chiesto di consultare le regole
+//  - ad un numero corrispondente alla posizione della carta da giocare
+//    nella mano del giocatore se si è selezionata una carta valida
+//  Inoltre chiama plus() per gestire i +2 e +4
 void get_move(Game *game)
 {
     // +2 e +4
-    if (game->Plus) {
+    if (game->Plus)
+    {
         plus(game);
         return;
     }
@@ -250,122 +258,51 @@ void get_move(Game *game)
         game->Move = '0';
         return;
     }
-
-    printf("Seleziona la carta che intendi giocare,\noppure digita 'aiuto' per consultare le regole: ");
-
-    char move[20];
+    
+    // ricorda di dire Uno!
+        if (*(game->SzHands + game->CurrentPlayer) == 1 && forgot_uno())
+        {
+            game->Move = 'u';
+            return;
+        }
 
     while (true)
     {
-        struct card chosen;
-        chosen.front[0] = '\0'; // inizializzazione variabile
-        chosen.color = na;
 
-        strcpy(move, read_words());
+        struct card chosen = chosen_card();
 
-        short spazi = 0;
-        char *temp = move; // converte tutti i caratteri maiuscoli e minuscoli per le
-        while (*temp)      // future comparazioni e controlla il numero di spazi
-        {
-            if (*temp == ' ')
-                spazi++;
-            temp++;
-        }
-
-        // regolamento
-        if (!strcmp(move, "aiuto"))
-        {
-            // game->Move = 'h';
-            game->Move = '0';
+        // se si è digitato 'aiuto'
+        if (chosen.front[0] == 'h') {
+            game->Move = 'h';
             return;
         }
 
-        // ricorda di dire Uno!
-        if (strcmp(move, "uno") && *(game->SzHands + game->CurrentPlayer) == 1)
+        // se la carta è valida
+        if (chosen.front && chosen.color != na)
         {
-            // game->Move = 'u';
-            game->Move = '0';
-            return;
-        }
-
-        if (spazi == 1 || !strcmp(move, "choose") || !strcmp(move, "+4")) // poichè per le nere non serve specificare il colore non ci sono spazi
-        {
-
-            char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
-
-            // carte numero
-            if (*token >= '0' && *token <= '9' && *(token + 1) == '\0')
-                strcpy(chosen.front, token);
-            // carte +2 o +4
-            else if (*token == '+' && (*(token + 1) == '2' || *(token + 1) == '4') && *(token + 2) == '\0')
-            {
-                strcpy(chosen.front, token);
-                if (chosen.front[1] == '4')
-                    chosen.color = n;
-            }
-            // carte speciali
-            else if (!strcmp(token, "reverse"))
-                strcpy(chosen.front, "R");
-            else if (!strcmp(token, "stop"))
-                strcpy(chosen.front, "S");
-            else if (!strcmp(token, "choose"))
-            {
-                strcpy(chosen.front, "C");
-                chosen.color = n;
-            }
-
-            // prende la seconda parola, corrispondente al colore
-            if (chosen.color == na)
-            {
-                token = strtok(NULL, " ");
-
-                if (!strcmp(token, "rosso"))
-                    chosen.color = r;
-                else if (!strcmp(token, "verde"))
-                    chosen.color = g;
-                else if (!strcmp(token, "blu"))
-                    chosen.color = b;
-                else if (!strcmp(token, "giallo"))
-                    chosen.color = y;
-            }
-
-            // controlla la validità della mossa
-            if (chosen.front && chosen.color != na)
-            {
-                // si assicura che nel caso in cui ci sia un +2 o +4 e il giocatore possa rispondere lo faccia
-                if (((!strcmp(game->DiscardDeck.front, "+2") || !strcmp(game->DiscardDeck.front, "+4")) && strcmp(chosen.front, game->DiscardDeck.front)) && !game->FirstTurn)
+            
+                // confronto con quella in cima al mazzo discard
+                if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
                 {
-                    printf("Gioca il tuo %s: ", (strcmp(chosen.front, "+2") ? "+4" : "+2"));
+                    printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
                 }
                 else
                 {
-                    // confronto con quella in cima al mazzo discard
-                    if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
+                    // confronto con quelle nella mano del giocatore
+                    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
                     {
-                        printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
-                    }
-                    else
-                    {
-                        // confronto con quelle nella mano del giocatore
-                        for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
+                        struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
+                        if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
                         {
-                            struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
-                            if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
-                            {
-                                game->FirstTurn = false;
-                                game->Move = i + 48;
-                                return;
-                            }
+                            game->FirstTurn = false;
+                            game->Move = i + 48;
+                            return;
                         }
-
-                        printf("Non hai quella carta, selezionane un'altra: ");
                     }
+
+                    printf("Non hai quella carta, selezionane un'altra: ");
                 }
-            }
-            else
-            {
-                printf("Seleziona una mossa valida: ");
-            }
+            
         }
         else
         {
@@ -374,15 +311,95 @@ void get_move(Game *game)
     }
 }
 
-const char* read_words() {
-    static char move[20];
+// può restituire
+//  - una carta valida
+//  -una carta non valida
+//  -una carta con faccia h per help
+struct card chosen_card()
+{
+    char move[20];
 
-    scanf("%20[^\n]", move); // per leggere l'intera riga senza fermarsi agli spazi
+    struct card chosen;
+    chosen.front[0] = '\0'; // inizializzazione variabile
+    chosen.color = na;
+
+    read_words(move);
+
+    // regolamento
+    if (!strcmp(move, "aiuto"))
+    {
+        chosen.front[0] == 'h';
+        return chosen;
+    }
+
+    short spazi = 0;
+    char *temp = move; // converte tutti i caratteri maiuscoli e minuscoli per le
+    while (*temp)      // future comparazioni e controlla il numero di spazi
+    {
+        if (*temp == ' ')
+            spazi++;
+        temp++;
+    }
+
+    if (spazi != 1 && strcmp(move, "choose") && strcmp(move, "+4")) // poichè per le nere non serve specificare il colore non ci sono spazi
+    {
+        printf("Seleziona una mossa valida: ");
+        return chosen;
+    }
+
+    char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
+
+    // carte numero
+    if (*token >= '0' && *token <= '9' && *(token + 1) == '\0')
+        strcpy(chosen.front, token);
+    // carte +2 o +4
+    else if (*token == '+' && (*(token + 1) == '2' || *(token + 1) == '4') && *(token + 2) == '\0')
+    {
+        strcpy(chosen.front, token);
+        if (chosen.front[1] == '4')
+            chosen.color = n;
+    }
+    // carte speciali
+    else if (!strcmp(token, "reverse"))
+        strcpy(chosen.front, "R");
+    else if (!strcmp(token, "stop"))
+        strcpy(chosen.front, "S");
+    else if (!strcmp(token, "choose"))
+    {
+        strcpy(chosen.front, "C");
+        chosen.color = n;
+    }
+
+    // prende la seconda parola, corrispondente al colore
+    if (chosen.color == na)
+    {
+        token = strtok(NULL, " ");
+
+        if (!strcmp(token, "rosso"))
+            chosen.color = r;
+        else if (!strcmp(token, "verde"))
+            chosen.color = g;
+        else if (!strcmp(token, "blu"))
+            chosen.color = b;
+        else if (!strcmp(token, "giallo"))
+            chosen.color = y;
+    }
+
+    return chosen;
+}
+
+void read_words(char *str)
+{
+    char words[20];
+
+    printf("Seleziona la carta che intendi giocare,\noppure digita 'aiuto' per consultare le regole: ");
+
+    scanf("%20[^\n]", words); // per leggere l'intera riga senza fermarsi agli spazi
     clean_stdin();
 
-    lowercase(move);
+    lowercase(words);
 
-    return move;
+    strcpy(str, words);
 }
 
 void update(Game *game)
@@ -477,7 +494,8 @@ int choose_color()
     return res;
 }
 
-void plus(Game* game) {
+void plus(Game *game)
+{
     bool draw = false;
     draw = true;
     for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
@@ -492,9 +510,21 @@ void plus(Game* game) {
         game->Move = '+';
         return;
     }
+    /*
+    // si assicura che nel caso in cui ci sia un +2 o +4 e il giocatore possa rispondere lo faccia
+        if (((!strcmp(game->DiscardDeck.front, "+2") || !strcmp(game->DiscardDeck.front, "+4")) && strcmp(chosen.front, game->DiscardDeck.front)) && !game->FirstTurn)
+        {
+            printf("Gioca il tuo %s: ", (strcmp(chosen.front, "+2") ? "+4" : "+2"));
+        }
+    */
 }
 
-bool check_draw(Game* game) {
+bool forgot_uno() {
+    return false;
+}
+
+bool check_draw(Game *game)
+{
     bool draw = true;
     for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
     {
@@ -516,7 +546,8 @@ void help()
 void clean_stdin()
 {
     char c;
-    do {
+    do
+    {
         c = getchar();
     } while (c != '\n' && c != EOF);
 }
