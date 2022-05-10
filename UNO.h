@@ -55,10 +55,9 @@ typedef struct game_state
     int Plus;
     bool Rotation;
     bool FirstTurn;
-    
+    bool GameOver;
 } Game;
 
-bool GameOver;
 
 // funzioni legate alla logica del gioco
 void Start(Game *);

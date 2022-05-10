@@ -2,7 +2,7 @@
 
 void Start(Game *game)
 {
-    GameOver = false;
+    game->GameOver = false;
 
     srand(time(0)); // per valori randomici
 
@@ -489,7 +489,7 @@ void update(Game *game)
 
     // controlla vittoria
     if (!(*szHand)) {
-        end_game(&game);
+        game->GameOver = true;
         return;
     }
 
@@ -674,22 +674,20 @@ bool check_draw(Game *game)
 }
 
 //termina il gioco deallocando la memoria occupata da game e le sue variabili
-void end_game(Game** game) {
+void end_game(Game* game) {
 
-    show_winner((*game)->CurrentPlayer + 1);
+    show_winner(game->CurrentPlayer + 1);
 
-    free((*game)->Deck);
+    free(game->Deck);
 
-    for (int i = 0; i < (*game)->SzPlayers; i++)
-        free(*((*game)->Players + i));
+    for (int i = 0; i < game->SzPlayers; i++)
+        free(*(game->Players + i));
 
-    free((*game)->Players);
+    free(game->Players);
 
-    free((*game)->SzHands);
+    free(game->SzHands);
 
-    free((*game));
-
-    GameOver = true;
+    free(game);
 }
 
 void show_winner(int winner) {

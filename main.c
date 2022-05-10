@@ -9,12 +9,15 @@ int main()
         Start(game);
 
         // loop del gioco
-        while (!GameOver)
+        while (!game->GameOver)
         {
             display(game);
             get_move(game);
             update(game);
         }
+
+        end_game(game);
+
     } while (play_again());
 
   return 0;
