@@ -491,18 +491,19 @@ void remove_from_hand(Game *game, int played)
     (*(game->SzHands + game->CurrentPlayer))--;
 }
 
+// pesca e aggiunge alla mano del giocatore n carte
 void draw(Game *game, int n)
 {
     while (n > 0)
     {
-        // aumenta la dimensione della mano
-        (*(game->SzHands + game->CurrentPlayer))++;
-
-        // copia la carta in cima al mazzo nella mano del giocatore
+        // copia la carta in cima alla mano del giocatore
         game->SzDeck--;
 
         ((*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer)))->color = (game->Deck + game->SzDeck)->color;
-        strcpy(((*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer)))->front, (game->Deck + game->SzDeck)->front);
+        strcpy((*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer))->front, (game->Deck + game->SzDeck)->front);
+
+        // aumenta la dimensione della mano
+        (*(game->SzHands + game->CurrentPlayer))++;
 
         n--;
     }
