@@ -55,7 +55,10 @@ typedef struct game_state
     int Plus;
     bool Rotation;
     bool FirstTurn;
+    
 } Game;
+
+bool GameOver;
 
 // funzioni legate alla logica del gioco
 void Start(Game *);
@@ -63,7 +66,6 @@ void shuffle(Game *);
 int get_players();
 struct card *find_empty_space(Game *);
 void init_players(Game *);
-bool is_over(Game *);
 struct card chosen_card();
 void update(Game *);
 void next_turn(Game*);
@@ -72,6 +74,7 @@ void draw(Game*, int);
 void plus(Game*);
 bool forgot_uno();
 bool check_draw(Game*);
+void end_game(Game*);
 void lowercase(char *);
 
 // funzioni legate all'interfaccia
@@ -82,4 +85,6 @@ void read_words(char*);
 int choose_color();
 void show_drawn(Game*, int);
 void help();
+void show_winner(int);
+bool play_again();
 void clean_stdin();

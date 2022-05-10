@@ -2,18 +2,20 @@
 
 int main()
 {
-  Game *game;
-  game = (Game *)malloc(sizeof(Game));
+    do {
+        Game* game;
+        game = (Game*)malloc(sizeof(Game));
 
-  Start(game);
+        Start(game);
 
-  // loop del gioco
-  while (!is_over(game))
-  {
-    display(game);
-    get_move(game);
-    update(game);
-  }
+        // loop del gioco
+        while (!GameOver)
+        {
+            display(game);
+            get_move(game);
+            update(game);
+        }
+    } while (play_again());
 
   return 0;
 }

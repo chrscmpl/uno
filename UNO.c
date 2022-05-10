@@ -2,6 +2,8 @@
 
 void Start(Game *game)
 {
+    GameOver = false;
+
     srand(time(0)); // per valori randomici
 
     // inizializazione mazzo principale
@@ -25,6 +27,7 @@ void Start(Game *game)
 // richiede dalla tastiera l'inserimento del numero di giocatori
 int get_players()
 {
+    system(clear);
     int p = 0;
     printf("inserire il numero di giocatori: ");
     while (p < 2 || p > 4)
@@ -136,11 +139,6 @@ void init_players(Game *game)
         *(game->SzHands + i) = STARTING_HAND_SIZE;
 }
 
-bool is_over(Game *game)
-{
-    // finito il gioco game e le sue variabili vengono deallocate e game impostato a NULL che vale 0
-    return !game;
-}
 // stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
 void display(Game *game)
 {
@@ -400,10 +398,11 @@ void read_words(char *str)
 
 void update(Game *game)
 {
-    struct card *player = *(game->Players + game->CurrentPlayer); // leggibilità
+    struct card *player = *(game->Players + game->CurrentPlayer); // per leggibilità
     int *szHand = (game->SzHands + game->CurrentPlayer);
     int played = game->Move - 48;
     bool stop = false;
+
     // help e pescate
     switch (game->Move)
     {
@@ -452,8 +451,10 @@ void update(Game *game)
     remove_from_hand(game, played);
 
     // controlla vittoria
-    if (!(*szHand))
-        player = NULL;
+    if (!(*szHand)) {
+        end_game(&game);
+        return;
+    }
 
     next_turn(game);
 
@@ -613,9 +614,12 @@ void plus(Game *game)
 
 bool forgot_uno()
 {
+    return false;
+    /*
     char words[20];
     read_words(words);
     return (strcpy(words, "uno") && strcpy(words, "uno!"));
+    */
 }
 
 bool check_draw(Game *game)
@@ -630,12 +634,53 @@ bool check_draw(Game *game)
     return draw;
 }
 
+//termina il gioco deallocando la memoria occupata da game e le sue variabili
+void end_game(Game** game) {
+
+    show_winner((*game)->CurrentPlayer + 1);
+
+    free((*game)->Deck);
+
+    for (int i = 0; i < (*game)->SzPlayers; i++)
+        free(*((*game)->Players + i));
+
+    free((*game)->Players);
+
+    free((*game)->SzHands);
+
+    free((*game));
+
+    GameOver = true;
+}
+
+void show_winner(int winner) {
+    system(clear);
+
+    printf("\n\n\n\t\t\t\t\t%sVince %sil %sgiocatore%s %d%s!%s", RED, GREEN, BLUE, YELLOW, winner, RED, RESET);
+
+    clean_stdin();
+}
+
+bool play_again() {
+    system(clear);
+
+    printf("\n\n\n\t\t\t\t\t%sVuoi %sgiocare %sancora%s?%s\n\n\t\t\t\t\t", RED, GREEN, BLUE, YELLOW, RESET);
+
+    char answer[3];
+    scanf("%s", answer);
+    clean_stdin();
+    lowercase(answer);
+
+    return !strcmp(answer, "si");
+}
+
 void help()
 {
     system(clear);
     printf("\nPer selezionare la carta che vuoi giocare digitala nel formato *faccia* *colore*\n\n");
     printf("Per consultare le regole del gioco:\n");
     printf("https://www.wikihow.it/Giocare-a-UNO");
+    clean_stdin();
 }
 
 //scanf per qualche motivo crea loop infiniti perchè il buffer di input non viene pulito completamente.
