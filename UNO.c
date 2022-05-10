@@ -542,7 +542,7 @@ int choose_color()
         else if (!strcmp(color, "blu"))
             res = 3;
         else if (!strcmp(color, "giallo"))
-            res = 5;
+            res = 4;
 
         if (res == 0)
             printf("Seleziona un colore valido: ");
