@@ -615,12 +615,13 @@ void plus(Game *game)
 
 bool forgot_uno()
 {
-    return false;
-    /*
     char words[20];
     read_words(words);
-    return (strcpy(words, "uno") && strcpy(words, "uno!"));
-    */
+
+    if (!(strcmp(words, "uno") && strcmp(words, "uno!")))
+        printf("\n\n%sBravo%s, %sla %svittoria %se' %stua%s!%s\n\n", RED, GREEN, BLUE, YELLOW, RED, GREEN, BLUE, RESET);
+
+    return (strcmp(words, "uno") && strcmp(words, "uno!"));
 }
 
 bool check_draw(Game *game)
