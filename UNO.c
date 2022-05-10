@@ -449,7 +449,9 @@ void update(Game *game)
     case 'd':
         draw(game, 1);
         show_drawn(game, 1);
-        next_turn(game);
+        struct card drawn = *(player + *szHand - 1);
+        if(strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n))
+            next_turn(game);
         return;
     case 'u':
         draw(game, 2);
