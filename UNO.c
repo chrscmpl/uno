@@ -249,7 +249,7 @@ void get_move(Game *game)
     }
 
     // in caso di nessuna mossa disponibile si pesca
-    if (check_draw(game))
+    if (check_draw(game) && !game->FirstTurn)
     {
         game->Move = 'd';
         return;
@@ -412,10 +412,19 @@ void update(Game *game)
         return;
     case 'd':
         draw(game, 1);
+        show_drawn(game, 1);
         next_turn(game);
         return;
     case 'u':
+        draw(game, 2);
+        printf("Hai dimenticato di dire UNO!\n");
+        show_drawn(game, 2);
+        next_turn(game);
+        return;
     case '+':
+        draw(game, game->Plus);
+        show_drawn(game, game->Plus);
+        game->Plus = 0;
         return;
     }
 
@@ -475,8 +484,7 @@ void next_turn(Game *game)
 // aggiorna la mano
 void remove_from_hand(Game *game, int played)
 {
-
-    for (int i = played; i < *(game->SzHands + game->CurrentPlayer) - 2; i++)
+    for (int i = played; i < *(game->SzHands + game->CurrentPlayer) - 1; i++)
         *(*(game->Players + game->CurrentPlayer) + i) = *(*(game->Players + game->CurrentPlayer) + i + 1);
 
     (*(game->SzHands + game->CurrentPlayer))--;
@@ -498,7 +506,6 @@ void draw(Game *game, int n)
         n--;
     }
 
-    show_drawn(game, n);
 }
 
 void show_drawn(Game *game, int n)
@@ -510,7 +517,9 @@ void show_drawn(Game *game, int n)
         p--;
         printf("%s\t\t", displayed_card(p));
     }
-    system("pause");
+
+    printf("%s\n", RESET);
+    clean_stdin(); // system("pause")
 }
 
 int choose_color()
@@ -552,22 +561,61 @@ void plus(Game *game)
 
     if (draw)
     {
-        // game->Move = '+';
         game->Move = '+';
         return;
     }
-    /*
-    // si assicura che nel caso in cui ci sia un +2 o +4 e il giocatore possa rispondere lo faccia
-        if (((!strcmp(game->DiscardDeck.front, "+2") || !strcmp(game->DiscardDeck.front, "+4")) && strcmp(chosen.front, game->DiscardDeck.front)) && !game->FirstTurn)
+    
+    //Nel caso il giocatore abbia in mano un +2 / +4
+    while (true)
+    {
+
+        struct card chosen = chosen_card();
+
+        // se si è digitato 'aiuto'
+        if (chosen.front[0] == 'h')
         {
-            printf("Gioca il tuo %s: ", (strcmp(chosen.front, "+2") ? "+4" : "+2"));
+            game->Move = 'h';
+            return;
         }
-    */
+
+        // se la carta è valida
+        if (chosen.front && chosen.color != na)
+        {
+            bool in_hand = false;
+            // confronto con quelle nella mano del giocatore
+            for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
+            {
+                struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
+                if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
+                {
+                    game->FirstTurn = false;
+                    game->Move = i + 48;
+                    in_hand = true;
+                }
+            }
+            
+            if(!in_hand)
+                printf("Non hai quella carta, selezionane un'altra: ");
+            else {
+                if (!strcmp(chosen.front, game->DiscardDeck.front))
+                    return;
+
+                printf("Gioca il tuo %s!\n", (strcmp(game->DiscardDeck.front, "+2") ? "+4" : "+2"));
+            }
+
+        }
+        else
+        {
+            printf("Seleziona una mossa valida: ");
+        }
+    }
 }
 
 bool forgot_uno()
 {
-    return false;
+    char words[20];
+    read_words(words);
+    return (strcpy(words, "uno") && strcpy(words, "uno!"));
 }
 
 bool check_draw(Game *game)
@@ -590,6 +638,12 @@ void help()
     printf("https://www.wikihow.it/Giocare-a-UNO");
 }
 
+//scanf per qualche motivo crea loop infiniti perchè il buffer di input non viene pulito completamente.
+//Ho provato fflush(stdin) ma funzionava solo su un compilatore e su un altro no.
+//questa funzione sostituisce fflush(stdin) e funziona su ogni compilatore,
+//ma se usata quando il buffer è già vuoto, attende che l'utente prema invio prima di proseguire,
+//motivo per il quale il suo secondo lavoro è quello di sostituire system("pause"),
+//poichè pause è un comando solo di Windows e non funziona su Linux e MacOs
 void clean_stdin()
 {
     char c;
