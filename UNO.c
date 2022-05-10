@@ -664,16 +664,28 @@ void show_winner(int winner) {
 }
 
 bool play_again() {
-    system(clear);
+    bool answered = false;
+    bool again = false;
+    while (!answered)
+    {
+        system(clear);
 
-    printf("\n\n\n\t\t\t\t\t%sVuoi %sgiocare %sancora%s?%s\n\n\t\t\t\t\t", RED, GREEN, BLUE, YELLOW, RESET);
+        printf("\n\n\n\t\t\t\t\t%sVuoi %sgiocare %sancora%s?%s\n\n\t\t\t\t\t", RED, GREEN, BLUE, YELLOW, RESET);
 
-    char answer[3];
-    scanf("%s", answer);
-    clean_stdin();
-    lowercase(answer);
+        char answer[20];
+        scanf("%s", answer);
+        clean_stdin();
+        lowercase(answer);
 
-    return !strcmp(answer, "si");
+        if (!strcmp(answer, "si")) {
+            again = true;
+            answered = true;
+        }
+        else if (!strcmp(answer, "no"))
+            answered = true;
+    }
+
+    return again;
 }
 
 void help()
