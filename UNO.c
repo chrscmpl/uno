@@ -179,7 +179,7 @@ void display(Game *game)
 const char *displayed_card(struct card *c)
 {
     // imposta il colore
-    char color[6] = RESET;
+    char color[6] = RESET;/*
     switch (c->color)
     {
     case r:
@@ -193,11 +193,8 @@ const char *displayed_card(struct card *c)
         break;
     case y:
         strcpy(color, YELLOW);
-        break;
-    case n:
-        strcpy(color, RESET);
     }
-
+    */
     // per le carte speciali
     char *face = NULL;
     switch (c->front[0])
@@ -257,13 +254,13 @@ void get_move(Game *game)
         game->Move = 'd';
         return;
     }
-    
+
     // ricorda di dire Uno!
-        if (*(game->SzHands + game->CurrentPlayer) == 1 && forgot_uno())
-        {
-            game->Move = 'u';
-            return;
-        }
+    if (*(game->SzHands + game->CurrentPlayer) == 1 && forgot_uno())
+    {
+        game->Move = 'u';
+        return;
+    }
 
     while (true)
     {
@@ -271,7 +268,8 @@ void get_move(Game *game)
         struct card chosen = chosen_card();
 
         // se si è digitato 'aiuto'
-        if (chosen.front[0] == 'h') {
+        if (chosen.front[0] == 'h')
+        {
             game->Move = 'h';
             return;
         }
@@ -279,29 +277,28 @@ void get_move(Game *game)
         // se la carta è valida
         if (chosen.front && chosen.color != na)
         {
-            
-                // confronto con quella in cima al mazzo discard
-                if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
-                {
-                    printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
-                }
-                else
-                {
-                    // confronto con quelle nella mano del giocatore
-                    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
-                    {
-                        struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
-                        if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
-                        {
-                            game->FirstTurn = false;
-                            game->Move = i + 48;
-                            return;
-                        }
-                    }
 
-                    printf("Non hai quella carta, selezionane un'altra: ");
+            // confronto con quella in cima al mazzo discard
+            if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
+            {
+                printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
+            }
+            else
+            {
+                // confronto con quelle nella mano del giocatore
+                for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
+                {
+                    struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
+                    if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
+                    {
+                        game->FirstTurn = false;
+                        game->Move = i + 48;
+                        return;
+                    }
                 }
-            
+
+                printf("Non hai quella carta, selezionane un'altra: ");
+            }
         }
         else
         {
@@ -459,7 +456,8 @@ void update(Game *game)
 }
 
 // passa il turno
-void next_turn(Game* game) {
+void next_turn(Game *game)
+{
     if (game->Rotation)
     {
         game->CurrentPlayer++;
@@ -475,7 +473,8 @@ void next_turn(Game* game) {
 }
 
 // aggiorna la mano
-void remove_from_hand(Game* game, int played) {
+void remove_from_hand(Game *game, int played)
+{
 
     for (int i = played; i < *(game->SzHands + game->CurrentPlayer) - 1; i++)
         *((game->Players + game->CurrentPlayer) + i) = *((game->Players + game->CurrentPlayer) + i + 1);
@@ -483,17 +482,18 @@ void remove_from_hand(Game* game, int played) {
     (*(game->SzHands + game->CurrentPlayer))--;
 }
 
-void draw(Game* game, int n)
+void draw(Game *game, int n)
 {
-    while (n > 0) {
-
+    while (n > 0)
+    {
         // aumenta la dimensione della mano
-        (* (game->SzHands + game->CurrentPlayer))++;
+        (*(game->SzHands + game->CurrentPlayer))++;
 
         // copia la carta in cima al mazzo nella mano del giocatore
         game->SzDeck--;
 
-        *( *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer)) = *(game->Deck + game->SzDeck);
+        ((*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer)))->color = (game->Deck + game->SzDeck)->color;
+        strcpy(((*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer)))->front, (game->Deck + game->SzDeck)->front);
 
         n--;
     }
@@ -501,13 +501,14 @@ void draw(Game* game, int n)
     show_drawn(game, n);
 }
 
-void show_drawn(Game* game, int n)
-{   
+void show_drawn(Game *game, int n)
+{
     printf("Hai pescato %s:\n", (n > 1 ? "le seguenti carte" : "la seguente carta"));
-    struct card* p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer);
-    for (int i = 0; i < n; i++) {
-        printf("%s\t\t", displayed_card(p));
+    struct card *p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer);
+    for (int i = 0; i < n; i++)
+    {
         p--;
+        printf("%s\t\t", displayed_card(p));
     }
     system("pause");
 }
@@ -564,7 +565,8 @@ void plus(Game *game)
     */
 }
 
-bool forgot_uno() {
+bool forgot_uno()
+{
     return false;
 }
 
