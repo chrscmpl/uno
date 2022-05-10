@@ -179,7 +179,7 @@ void display(Game *game)
 const char *displayed_card(struct card *c)
 {
     // imposta il colore
-    char color[6] = RESET;/*
+    char color[6] = RESET;
     switch (c->color)
     {
     case r:
@@ -194,7 +194,7 @@ const char *displayed_card(struct card *c)
     case y:
         strcpy(color, YELLOW);
     }
-    */
+    
     // per le carte speciali
     char *face = NULL;
     switch (c->front[0])
@@ -476,8 +476,8 @@ void next_turn(Game *game)
 void remove_from_hand(Game *game, int played)
 {
 
-    for (int i = played; i < *(game->SzHands + game->CurrentPlayer) - 1; i++)
-        *((game->Players + game->CurrentPlayer) + i) = *((game->Players + game->CurrentPlayer) + i + 1);
+    for (int i = played; i < *(game->SzHands + game->CurrentPlayer) - 2; i++)
+        *(*(game->Players + game->CurrentPlayer) + i) = *(*(game->Players + game->CurrentPlayer) + i + 1);
 
     (*(game->SzHands + game->CurrentPlayer))--;
 }
