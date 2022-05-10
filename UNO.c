@@ -140,8 +140,10 @@ void init_players(Game *game)
 }
 
 // stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
+// oltre a varie informazioni
 void display(Game *game)
 {
+    transition(game);
     system(clear);
 
     printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
@@ -170,6 +172,41 @@ void display(Game *game)
         printf("%s\t\t", displayed_card(*(game->Players + game->CurrentPlayer) + i));
 
     printf("%s\n\n\n\n", RESET);
+}
+
+//crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
+void transition(Game* game) {
+
+    //ho bisogno di questa variabile per non mostrare la schermata dopo una pescata
+    //o dopo uno stop in una partita tra due giocatori
+    static int player;
+    if (game->FirstTurn)
+        player = -1;
+
+    if (game->CurrentPlayer == player)
+        return;
+
+    player = game->CurrentPlayer;
+
+    char color[6] = RESET;
+    switch (game->CurrentPlayer) {
+    case 0:
+        strcpy(color, RED);
+        break;
+    case 1:
+        strcpy(color, GREEN);
+        break;
+    case 2:
+        strcpy(color, BLUE);
+        break;
+    case 3:
+        strcpy(color, YELLOW);
+    }
+
+    system(clear);
+
+    printf("\n\n\n\t\t\t\t\t%sTurno del giocatore %d%s", color, game->CurrentPlayer + 1, RESET);
+    clean_stdin();
 }
 
 // converte una carta in una stringa che ha come prefisso la sequenza di escape

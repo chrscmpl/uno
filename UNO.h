@@ -79,6 +79,7 @@ void lowercase(char *);
 
 // funzioni legate all'interfaccia
 void display(Game *);
+void transition(Game* game);
 const char *displayed_card(struct card *c);
 void get_move(Game *);
 void read_words(char*);
