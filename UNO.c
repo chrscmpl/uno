@@ -617,6 +617,7 @@ void display(Game *game)
         printf("%s\t\t", displayed_card(*(game->Players + game->CurrentPlayer) + i));
 
     printf("%s\n\n\n\n", RESET);
+    printf("Seleziona la carta che intendi giocare, oppure digita 'aiuto' per consultare le regole\n\n");
 }
 
 // crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
@@ -707,7 +708,7 @@ void read_words(char *str)
 {
     char words[20];
 
-    printf("Seleziona la carta che intendi giocare,\noppure digita 'aiuto' per consultare le regole: ");
+    printf("> ");
 
     scanf("%20[^\n]", words); // per leggere l'intera riga senza fermarsi agli spazi
     clean_stdin();
