@@ -24,23 +24,6 @@ void Start(Game *game)
     game->FirstTurn = true;
 }
 
-// richiede dalla tastiera l'inserimento del numero di giocatori
-int get_players()
-{
-    system(clear);
-    int p = 0;
-    printf("inserire il numero di giocatori: ");
-    while (p < 2 || p > 4)
-    {
-        scanf("%d", &p);
-        clean_stdin();
-        if (p < 2 || p > 4)
-            printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 2 e 4: ");
-    }
-    system(clear);
-    return p;
-}
-
 // inizializza il mazzo principale
 void shuffle(Game *game)
 {
@@ -115,6 +98,23 @@ struct card *find_empty_space(Game *game)
     return space;
 }
 
+// richiede dalla tastiera l'inserimento del numero di giocatori
+int get_players()
+{
+    system(clear);
+    int p = 0;
+    printf("inserire il numero di giocatori: ");
+    while (p < 2 || p > 4)
+    {
+        scanf("%d", &p);
+        clean_stdin();
+        if (p < 2 || p > 4)
+            printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 2 e 4: ");
+    }
+    system(clear);
+    return p;
+}
+
 // inizializza i mazzi dei giocatori
 void init_players(Game *game)
 {
@@ -137,134 +137,6 @@ void init_players(Game *game)
     game->SzHands = (int *)malloc(sizeof(int) * game->SzPlayers);
     for (int i = 0; i < game->SzPlayers; i++)
         *(game->SzHands + i) = STARTING_HAND_SIZE;
-}
-
-// stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
-// oltre a varie informazioni
-void display(Game *game)
-{
-    transition(game);
-    system(clear);
-
-    printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
-
-    // mostra il numero di carte nelle mani degli avversari, nell'ordine della rotazione
-    for (int i = game->Rotation ? 0 : (game->SzPlayers - 1); (game->Rotation && (i < game->SzPlayers)) || (!game->Rotation && (i >= 0));)
-    {
-        if (i != game->CurrentPlayer)
-            printf("il giocatore %d ha %d carte nella sua mano\n", i + 1, *(game->SzHands + i));
-        if (game->Rotation)
-            i++;
-        else
-            i--;
-    }
-
-    // mostra il verso di rotazione
-    printf("\nLa rotazione e' attualmente in senso %s\n\n\n", game->Rotation ? "orario" : "antiorario");
-
-    for (int i = 0; (i < (*(game->SzHands + game->CurrentPlayer))) && (i < STARTING_HAND_SIZE); i++) // aggiusta il mazzo discard più o meno
-        printf("\t");                                                                                // al centro rispetto alla mano
-
-    // la carta in cima al mazzo discard
-    printf("%s\n\n\n\n\n\t", displayed_card(&game->DiscardDeck));
-
-    for (int i = 0; i < (*(game->SzHands + game->CurrentPlayer)); i++) // mostra la mano del giocatore
-        printf("%s\t\t", displayed_card(*(game->Players + game->CurrentPlayer) + i));
-
-    printf("%s\n\n\n\n", RESET);
-}
-
-//crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
-void transition(Game* game) {
-
-    //ho bisogno di questa variabile per non mostrare la schermata dopo una pescata
-    //o dopo uno stop in una partita tra due giocatori
-    static int player;
-    if (game->FirstTurn)
-        player = -1;
-
-    if (game->CurrentPlayer == player)
-        return;
-
-    player = game->CurrentPlayer;
-
-    char color[6] = RESET;
-    switch (game->CurrentPlayer) {
-    case 0:
-        strcpy(color, RED);
-        break;
-    case 1:
-        strcpy(color, GREEN);
-        break;
-    case 2:
-        strcpy(color, BLUE);
-        break;
-    case 3:
-        strcpy(color, YELLOW);
-    }
-
-    system(clear);
-
-    printf("\n\n\n\t\t\t\t\t%sTurno del giocatore %d%s", color, game->CurrentPlayer + 1, RESET);
-    clean_stdin();
-}
-
-// converte una carta in una stringa che ha come prefisso la sequenza di escape
-// corrispondente al suo colore
-const char *displayed_card(struct card *c)
-{
-    // imposta il colore
-    char color[6] = RESET;
-    switch (c->color)
-    {
-    case r:
-        strcpy(color, RED);
-        break;
-    case g:
-        strcpy(color, GREEN);
-        break;
-    case b:
-        strcpy(color, BLUE);
-        break;
-    case y:
-        strcpy(color, YELLOW);
-    }
-    
-    // per le carte speciali
-    char *face = NULL;
-    switch (c->front[0])
-    {
-    case 'S':
-        face = (char *)malloc(sizeof(char) * 5);
-        strcpy(face, "Stop");
-        break;
-    case 'R':
-        face = (char *)malloc(sizeof(char) * 8);
-        strcpy(face, "Reverse");
-        break;
-    case 'C':
-        face = (char *)malloc(sizeof(char) * 7);
-        strcpy(face, "Choose");
-    }
-
-    // compone la stringa
-    static char colored_card[13];
-    strcpy(colored_card, color);
-    strcat(colored_card, (face ? face : c->front));
-
-    free(face);
-    return colored_card;
-}
-
-void lowercase(char *str)
-{
-    // converte tutti i caratteri maiuscoli e minuscoli per le
-    while (*str)
-    {
-        if (*str >= 'A' && *str <= 'Z')
-            *str += 32;
-        str++;
-    }
 }
 
 //  imposta il valore di game->move
@@ -347,6 +219,79 @@ void get_move(Game *game)
     }
 }
 
+void update(Game *game)
+{
+    struct card *player = *(game->Players + game->CurrentPlayer); // per leggibilità
+    int *szHand = (game->SzHands + game->CurrentPlayer);
+    int played = game->Move - 48;
+    bool stop = false;
+
+    // help e pescate
+    switch (game->Move)
+    {
+    case ' ':
+        return;
+    case 'h':
+        help();
+        return;
+    case 'd':
+        draw(game, 1);
+        show_drawn(game, 1);
+        struct card drawn = *(player + *szHand - 1);
+        if(strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n))
+            next_turn(game);
+        return;
+    case 'u':
+        draw(game, 2);
+        display_message("Hai dimenticato di dire UNO!");
+        show_drawn(game, 2);
+        next_turn(game);
+        return;
+    case '+':
+        draw(game, game->Plus);
+        show_drawn(game, game->Plus);
+        game->Plus = 0;
+        return;
+    }
+
+    // aggiorna il mazzo discard
+    game->DiscardDeck = *(player + played);
+
+    // effetti delle carte
+    switch ((player + played)->front[0])
+    {
+    case 'S':
+        stop = true;
+        break;
+    case 'R':
+        game->Rotation = !game->Rotation;
+        break;
+    case 'C':
+        game->DiscardDeck.color = (enum col)choose_color();
+        break;
+    case '+':
+        if ((player + played)->front[1] == '4')
+            game->DiscardDeck.color = (enum col)choose_color();
+        game->Plus += (player + played)->front[1] - 48;
+    }
+
+    remove_from_hand(game, played);
+
+    // controlla vittoria
+    if (!(*szHand)) {
+        game->GameOver = true;
+        return;
+    }
+
+    next_turn(game);
+
+    if (stop)
+        next_turn(game);
+
+    fflush(stdin);
+    game->Move = ' ';
+}
+
 // può restituire
 //  - una carta valida
 //  -una carta non valida
@@ -421,91 +366,15 @@ struct card chosen_card()
     return chosen;
 }
 
-void read_words(char *str)
+void lowercase(char *str)
 {
-    char words[20];
-
-    printf("Seleziona la carta che intendi giocare,\noppure digita 'aiuto' per consultare le regole: ");
-
-    scanf("%20[^\n]", words); // per leggere l'intera riga senza fermarsi agli spazi
-    clean_stdin();
-
-    lowercase(words);
-
-    strcpy(str, words);
-}
-
-void update(Game *game)
-{
-    struct card *player = *(game->Players + game->CurrentPlayer); // per leggibilità
-    int *szHand = (game->SzHands + game->CurrentPlayer);
-    int played = game->Move - 48;
-    bool stop = false;
-
-    // help e pescate
-    switch (game->Move)
+    // converte tutti i caratteri maiuscoli e minuscoli per le
+    while (*str)
     {
-    case ' ':
-        return;
-    case 'h':
-        help();
-        return;
-    case 'd':
-        draw(game, 1);
-        show_drawn(game, 1);
-        struct card drawn = *(player + *szHand - 1);
-        if(strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n))
-            next_turn(game);
-        return;
-    case 'u':
-        draw(game, 2);
-        display_message("Hai dimenticato di dire UNO!");
-        show_drawn(game, 2);
-        next_turn(game);
-        return;
-    case '+':
-        draw(game, game->Plus);
-        show_drawn(game, game->Plus);
-        game->Plus = 0;
-        return;
+        if (*str >= 'A' && *str <= 'Z')
+            *str += 32;
+        str++;
     }
-
-    // aggiorna il mazzo discard
-    game->DiscardDeck = *(player + played);
-
-    // effetti delle carte
-    switch ((player + played)->front[0])
-    {
-    case 'S':
-        stop = true;
-        break;
-    case 'R':
-        game->Rotation = !game->Rotation;
-        break;
-    case 'C':
-        game->DiscardDeck.color = (enum col)choose_color();
-        break;
-    case '+':
-        if ((player + played)->front[1] == '4')
-            game->DiscardDeck.color = (enum col)choose_color();
-        game->Plus += (player + played)->front[1] - 48;
-    }
-
-    remove_from_hand(game, played);
-
-    // controlla vittoria
-    if (!(*szHand)) {
-        game->GameOver = true;
-        return;
-    }
-
-    next_turn(game);
-
-    if (stop)
-        next_turn(game);
-
-    fflush(stdin);
-    game->Move = ' ';
 }
 
 // passa il turno
@@ -534,6 +403,21 @@ void remove_from_hand(Game *game, int played)
     (*(game->SzHands + game->CurrentPlayer))--;
 }
 
+bool check_draw(Game *game)
+{
+    if (game->DiscardDeck.color == n) // solo nel caso del primo turno
+        return false;
+
+    bool draw = true;
+    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
+    {
+        struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
+        if (!strcmp(temp.front, game->DiscardDeck.front) || temp.color == game->DiscardDeck.color || temp.color == n)
+            draw = false;
+    }
+    return draw;
+}
+
 // pesca e aggiunge alla mano del giocatore n carte
 void draw(Game *game, int n)
 {
@@ -559,48 +443,6 @@ void draw(Game *game, int n)
 
 }
 
-void show_drawn(Game *game, int n)
-{
-    printf("Hai pescato %s:\n", (n > 1 ? "le seguenti carte" : "la seguente carta"));
-    struct card *p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer);
-
-    p -= n;
-    for (int i = 0; i < n; i++)
-    {
-        printf("%s\t\t", displayed_card(p));
-        p++;
-    }
-
-    printf("%s\n", RESET);
-    clean_stdin(); // system("pause")
-}
-
-int choose_color()
-{
-    printf("\nScegli il colore della carta giocata: ");
-    char *color = (char *)malloc(sizeof(char) * 10);
-
-    int res = 0;
-    while (res == 0)
-    {
-        scanf("%s", color);
-        clean_stdin();
-        lowercase(color);
-        if (!strcmp(color, "rosso"))
-            res = 1;
-        else if (!strcmp(color, "verde"))
-            res = 2;
-        else if (!strcmp(color, "blu"))
-            res = 3;
-        else if (!strcmp(color, "giallo"))
-            res = 4;
-
-        if (res == 0)
-            printf("\nSeleziona un colore valido: ");
-    }
-    free(color);
-    return res;
-}
 
 void plus(Game *game)
 {
@@ -668,6 +510,17 @@ void plus(Game *game)
     }
 }
 
+bool forgot_uno()
+{
+    char words[20];
+    read_words(words);
+
+    if (!(strcmp(words, "uno") && strcmp(words, "uno!")))
+        printf("\n\n%sBravo%s, %sla %svittoria %se' %stua%s!%s\n\n", RED, GREEN, BLUE, YELLOW, RED, GREEN, BLUE, RESET);
+
+    return (strcmp(words, "uno") && strcmp(words, "uno!"));
+}
+
 void first_turn_effects(Game* game)
 {
     game->FirstTurn = false;
@@ -699,32 +552,6 @@ void first_turn_effects(Game* game)
     game->Move = ' ';
 }
 
-bool forgot_uno()
-{
-    char words[20];
-    read_words(words);
-
-    if (!(strcmp(words, "uno") && strcmp(words, "uno!")))
-        printf("\n\n%sBravo%s, %sla %svittoria %se' %stua%s!%s\n\n", RED, GREEN, BLUE, YELLOW, RED, GREEN, BLUE, RESET);
-
-    return (strcmp(words, "uno") && strcmp(words, "uno!"));
-}
-
-bool check_draw(Game *game)
-{
-    if (game->DiscardDeck.color == n) // solo nel caso del primo turno
-        return false;
-
-    bool draw = true;
-    for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
-    {
-        struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
-        if (!strcmp(temp.front, game->DiscardDeck.front) || temp.color == game->DiscardDeck.color || temp.color == n)
-            draw = false;
-    }
-    return draw;
-}
-
 //nel caso raro in cui il mazzo principale finisca le carte
 void refill(Game* game)
 {
@@ -749,6 +576,203 @@ void end_game(Game* game) {
     free(game->SzHands);
 
     free(game);
+}
+
+/******************************************************************************
+*************************FUNZIONI DELL'INTERFACCIA*****************************
+******************************************************************************/
+
+// stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
+// oltre a varie informazioni
+void display(Game* game)
+{
+    transition(game);
+    system(clear);
+
+    printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
+
+    // mostra il numero di carte nelle mani degli avversari, nell'ordine della rotazione
+    for (int i = game->Rotation ? 0 : (game->SzPlayers - 1); (game->Rotation && (i < game->SzPlayers)) || (!game->Rotation && (i >= 0));)
+    {
+        if (i != game->CurrentPlayer)
+            printf("il giocatore %d ha %d carte nella sua mano\n", i + 1, *(game->SzHands + i));
+        if (game->Rotation)
+            i++;
+        else
+            i--;
+    }
+
+    // mostra il verso di rotazione
+    printf("\nLa rotazione e' attualmente in senso %s\n\n\n", game->Rotation ? "orario" : "antiorario");
+
+    for (int i = 0; (i < (*(game->SzHands + game->CurrentPlayer))) && (i < STARTING_HAND_SIZE); i++) // aggiusta il mazzo discard più o meno
+        printf("\t");                                                                                // al centro rispetto alla mano
+
+    // la carta in cima al mazzo discard
+    printf("%s\n\n\n\n\n\t", displayed_card(&game->DiscardDeck));
+
+    for (int i = 0; i < (*(game->SzHands + game->CurrentPlayer)); i++) // mostra la mano del giocatore
+        printf("%s\t\t", displayed_card(*(game->Players + game->CurrentPlayer) + i));
+
+    printf("%s\n\n\n\n", RESET);
+}
+
+//crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
+void transition(Game* game) {
+
+    //ho bisogno di questa variabile per non mostrare la schermata dopo una pescata
+    //o dopo uno stop in una partita tra due giocatori
+    static int player;
+    if (game->FirstTurn)
+        player = -1;
+
+    if (game->CurrentPlayer == player)
+        return;
+
+    player = game->CurrentPlayer;
+
+    char color[6] = RESET;
+    switch (game->CurrentPlayer) {
+    case 0:
+        strcpy(color, RED);
+        break;
+    case 1:
+        strcpy(color, GREEN);
+        break;
+    case 2:
+        strcpy(color, BLUE);
+        break;
+    case 3:
+        strcpy(color, YELLOW);
+    }
+
+    system(clear);
+
+    printf("\n\n\n\t\t\t\t\t%sTurno del giocatore %d%s", color, game->CurrentPlayer + 1, RESET);
+    clean_stdin();
+}
+
+// converte una carta in una stringa che ha come prefisso la sequenza di escape
+// corrispondente al suo colore
+const char* displayed_card(struct card* c)
+{
+    // imposta il colore
+    char color[6] = RESET;
+    switch (c->color)
+    {
+    case r:
+        strcpy(color, RED);
+        break;
+    case g:
+        strcpy(color, GREEN);
+        break;
+    case b:
+        strcpy(color, BLUE);
+        break;
+    case y:
+        strcpy(color, YELLOW);
+    }
+
+    // per le carte speciali
+    char* face = NULL;
+    switch (c->front[0])
+    {
+    case 'S':
+        face = (char*)malloc(sizeof(char) * 5);
+        strcpy(face, "Stop");
+        break;
+    case 'R':
+        face = (char*)malloc(sizeof(char) * 8);
+        strcpy(face, "Reverse");
+        break;
+    case 'C':
+        face = (char*)malloc(sizeof(char) * 7);
+        strcpy(face, "Choose");
+    }
+
+    // compone la stringa
+    static char colored_card[13];
+    strcpy(colored_card, color);
+    strcat(colored_card, (face ? face : c->front));
+
+    free(face);
+    return colored_card;
+}
+
+void read_words(char *str)
+{
+    char words[20];
+
+    printf("Seleziona la carta che intendi giocare,\noppure digita 'aiuto' per consultare le regole: ");
+
+    scanf("%20[^\n]", words); // per leggere l'intera riga senza fermarsi agli spazi
+    clean_stdin();
+
+    lowercase(words);
+
+    strcpy(str, words);
+}
+
+int choose_color()
+{
+    printf("\nScegli il colore della carta giocata: ");
+    char *color = (char *)malloc(sizeof(char) * 10);
+
+    int res = 0;
+    while (res == 0)
+    {
+        scanf("%s", color);
+        clean_stdin();
+        lowercase(color);
+        if (!strcmp(color, "rosso"))
+            res = 1;
+        else if (!strcmp(color, "verde"))
+            res = 2;
+        else if (!strcmp(color, "blu"))
+            res = 3;
+        else if (!strcmp(color, "giallo"))
+            res = 4;
+
+        if (res == 0)
+            printf("\nSeleziona un colore valido: ");
+    }
+    free(color);
+    return res;
+}
+
+void show_drawn(Game *game, int n)
+{
+    printf("Hai pescato %s:\n", (n > 1 ? "le seguenti carte" : "la seguente carta"));
+    struct card *p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer);
+
+    p -= n;
+    for (int i = 0; i < n; i++)
+    {
+        printf("%s\t\t", displayed_card(p));
+        p++;
+    }
+
+    printf("%s\n", RESET);
+    clean_stdin(); // system("pause")
+}
+
+void help()
+{
+    system(clear);
+
+    // le regole vengono lette dal file rules.txt
+    FILE* rules;
+
+    rules = fopen("rules.txt", "r");
+    char ch[200];
+
+    while (!feof(rules)) {
+        fgets(ch, 200, rules);
+        puts(ch);
+    }
+
+    fclose(rules);
+    clean_stdin();
 }
 
 void show_winner(int winner) {
@@ -794,24 +818,6 @@ void display_message(char* str)
     printf(ch);
 }
 
-void help()
-{
-    system(clear);
-
-    // le regole vengono lette dal file rules.txt
-    FILE* rules;
-
-    rules = fopen("rules.txt", "r");
-    char ch[200];
-
-    while (!feof(rules)) {
-        fgets(ch, 200, rules);
-        puts(ch);
-    }
-
-    fclose(rules);
-    clean_stdin();
-}
 
 //scanf per qualche motivo crea loop infiniti perchè il buffer di input non viene pulito completamente.
 //Ho provato fflush(stdin) ma funzionava solo su un compilatore e su un altro no.

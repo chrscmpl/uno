@@ -62,27 +62,27 @@ typedef struct game_state
 // funzioni legate alla logica del gioco
 void Start(Game *);
 void shuffle(Game *);
-int get_players();
 struct card *find_empty_space(Game *);
+int get_players();
 void init_players(Game *);
-struct card chosen_card();
+void get_move(Game *);
 void update(Game *);
+struct card chosen_card();
+void lowercase(char *);
 void next_turn(Game*);
 void remove_from_hand(Game*, int);
+bool check_draw(Game*);
 void draw(Game*, int);
 void plus(Game*);
-void first_turn_effects(Game*);
 bool forgot_uno();
-bool check_draw(Game*);
+void first_turn_effects(Game*);
 void refill(Game*);
 void end_game(Game*);
-void lowercase(char *);
 
 // funzioni legate all'interfaccia
 void display(Game *);
 void transition(Game* game);
 const char *displayed_card(struct card *c);
-void get_move(Game *);
 void read_words(char*);
 int choose_color();
 void show_drawn(Game*, int);
