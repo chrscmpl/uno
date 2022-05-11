@@ -542,6 +542,12 @@ void draw(Game *game, int n)
 {
     while (n > 0)
     {
+        if (!game->SzDeck) //se il mazzo termina le carte
+        {
+            printf("\n%sChe partita! Il mazzo principale e' appena stato riempito di nuovo!%s\n", RED, RESET);
+            refill(game);
+        }
+
         // copia la carta in cima alla mano del giocatore
         game->SzDeck--;
 
@@ -716,6 +722,15 @@ bool check_draw(Game *game)
             draw = false;
     }
     return draw;
+}
+
+//nel caso raro in cui il mazzo principale finisca le carte
+void refill(Game* game)
+{
+    free(game->Deck);
+    game->Deck = (struct card*)malloc(sizeof(struct card) * SIZE_DECK);
+    game->SzDeck = SIZE_DECK;
+    shuffle(game);
 }
 
 //termina il gioco deallocando la memoria occupata da game e le sue variabili

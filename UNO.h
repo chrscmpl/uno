@@ -74,6 +74,7 @@ void plus(Game*);
 void first_turn_effects(Game*);
 bool forgot_uno();
 bool check_draw(Game*);
+void refill(Game*);
 void end_game(Game*);
 void lowercase(char *);
 
