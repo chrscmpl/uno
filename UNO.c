@@ -276,6 +276,11 @@ void lowercase(char *str)
 //  Inoltre chiama plus() per gestire i +2 e +4
 void get_move(Game *game)
 {
+    if (game->FirstTurn) {
+        first_turn_effects(game);
+        return;
+    }
+
     // +2 e +4
     if (game->Plus)
     {
@@ -443,6 +448,8 @@ void update(Game *game)
     // help e pescate
     switch (game->Move)
     {
+    case ' ':
+        return;
     case 'h':
         help();
         return;
@@ -654,6 +661,37 @@ void plus(Game *game)
     }
 }
 
+void first_turn_effects(Game* game)
+{
+    game->FirstTurn = false;
+
+    switch (game->DiscardDeck.front[0]) {
+    case 'S':
+
+        clean_stdin();
+
+        if (game->Rotation) // il senso dovrebbe essere sempre in senso orario ma magari potrei
+        {                   // cambiarlo quindi meglio scrivere le cose per bene
+            game->CurrentPlayer++;
+            if (game->CurrentPlayer >= game->SzPlayers)
+                game->CurrentPlayer -= game->SzPlayers;
+        }
+        else
+        {
+            game->CurrentPlayer--;
+            if (game->CurrentPlayer < 0)
+                game->CurrentPlayer += game->SzPlayers;
+        }
+        break;
+    case 'R':
+        game->Rotation = !game->Rotation;
+        break;
+    case'+':
+        game->Plus += game->DiscardDeck.front[1] - 48;
+    }
+    game->Move = ' ';
+}
+
 bool forgot_uno()
 {
     char words[20];
@@ -667,6 +705,9 @@ bool forgot_uno()
 
 bool check_draw(Game *game)
 {
+    if (game->DiscardDeck.color == n) // solo nel caso del primo turno
+        return false;
+
     bool draw = true;
     for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
     {

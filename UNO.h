@@ -71,6 +71,7 @@ void next_turn(Game*);
 void remove_from_hand(Game*, int);
 void draw(Game*, int);
 void plus(Game*);
+void first_turn_effects(Game*);
 bool forgot_uno();
 bool check_draw(Game*);
 void end_game(Game*);
