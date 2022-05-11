@@ -1,0 +1,41 @@
+
+Gioca le tue carte scrivendo la loro faccia nel formato *simbolo* *colore*
+
+Regole del gioco:
+    
+Ogni giocatore inizia la partita con 7 carte nella sua mano;
+il resto delle 108 carte vengono mischiate nel mazzo principale, e la carta in cima al mazzo diventa la prima carta del mazzo di scarto.
+
+Ogni giocatore deve giocare durante il suo turno una carta che sia compatbile con quella in cima al mazzo di scarto.
+Una carta e' compatibile se ha lo stesso simbolo di quella in cima al mazzo di scarto o lo stesso colore.
+Inoltre le carte bianche sono sempre compatibili.
+
+Se il giocatore non ha nessuna carta compatibile nella sua mano, deve pescare una carta, e se compatibile giocarla, altrimenti passa il turno.
+
+Vince il primo giocatore che resta con una mano vuota, ma non prima di aver detto "UNO!", poiche' chi se ne dimentica e' costretto a pescare 2 carte e saltare il proprio turno.
+
+Il mazzo contiene 2 copie delle carte numerate dalla 1 alla 9 e una copia dello 0 per ogni colore, e oltre a queste ci sono carte con effetti speciali.
+
+CARTA REVERSE:
+2 per ogni colore
+inverte il senso di rotazione
+
+CARTA STOP:
+2 per ogni colore
+costringe il giocatore successivo a saltare il proprio turno
+
++2:
+2 per ogni colore
+costringe il giocatore successivo a pescare 2 carte, a meno che non possegga un +2 a sua volta
+
+CARTA CHOOSE:
+4 bianche in tutto il mazzo
+permette al giocatore di scegliere il colore della carta
+
++4:
+4 bianche in tutto il mazzo
+costringe il giocatore successivo a pescare 4 carte, a meno che non possegga un +4 a sua volta, e permette inoltre di scegliere il colore della carta
+
+Per le carte +2 e +4, ogni giocatore colpito da esse puo' salvarsi giocando un'altra carta con il simbolo corrispondente, in questo caso il numero di carte da pescare aumenta e pesca il primo giocatore che non riesce a salvarsi.
+
+Se una carta speciale e' pescata all'inizio della partita l'effetto prende comunque luogo.

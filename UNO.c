@@ -785,10 +785,20 @@ bool play_again() {
 
 void help()
 {
+    
+    FILE* rules;
+
+    rules = fopen("rules.txt", "r");
+    char ch[200];
+
     system(clear);
-    printf("\nPer selezionare la carta che vuoi giocare digitala nel formato *faccia* *colore*\n\n");
-    printf("Per consultare le regole del gioco:\n");
-    printf("https://www.wikihow.it/Giocare-a-UNO");
+
+    while (!feof(rules)) {
+        fgets(ch, 200, rules);
+        puts(ch);
+    }
+
+    fclose(rules);
     clean_stdin();
 }
 
