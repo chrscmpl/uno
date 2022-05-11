@@ -553,10 +553,12 @@ void show_drawn(Game *game, int n)
 {
     printf("Hai pescato %s:\n", (n > 1 ? "le seguenti carte" : "la seguente carta"));
     struct card *p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer);
+
+    p -= n;
     for (int i = 0; i < n; i++)
     {
-        p--;
         printf("%s\t\t", displayed_card(p));
+        p++;
     }
 
     printf("%s\n", RESET);
