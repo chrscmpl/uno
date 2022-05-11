@@ -284,7 +284,7 @@ void get_move(Game *game)
     }
 
     // in caso di nessuna mossa disponibile si pesca
-    if (check_draw(game) && !game->FirstTurn)
+    if (check_draw(game))
     {
         game->Move = 'd';
         return;
