@@ -162,8 +162,8 @@ void display(Game *game)
     // mostra il verso di rotazione
     printf("\nLa rotazione e' attualmente in senso %s\n\n\n", game->Rotation ? "orario" : "antiorario");
 
-    for (int i = 0; i < (*(game->SzHands + game->CurrentPlayer)); i++) // aggiusta il mazzo discard più o meno
-        printf("\t");                                                  // al centro rispetto alla mano
+    for (int i = 0; (i < (*(game->SzHands + game->CurrentPlayer))) && (i < STARTING_HAND_SIZE); i++) // aggiusta il mazzo discard più o meno
+        printf("\t");                                                                                // al centro rispetto alla mano
 
     // la carta in cima al mazzo discard
     printf("%s\n\n\n\n\n\t", displayed_card(&game->DiscardDeck));
