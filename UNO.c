@@ -321,7 +321,7 @@ void get_move(Game *game)
             // confronto con quella in cima al mazzo discard
             if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
             {
-                display_message("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
+                display_message("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra");
             }
             else
             {
@@ -337,12 +337,12 @@ void get_move(Game *game)
                     }
                 }
 
-                display_message("Non hai quella carta, selezionane un'altra: ");
+                display_message("Non hai quella carta, selezionane un'altra");
             }
         }
         else
         {
-            display_message("Seleziona una mossa valida: ");
+            display_message("Seleziona una mossa valida");
         }
     }
 }
@@ -378,10 +378,7 @@ struct card chosen_card()
     }
 
     if (spazi != 1 && strcmp(move, "choose") && strcmp(move, "+4")) // poichè per le nere non serve specificare il colore non ci sono spazi
-    {
-        printf("Seleziona una mossa valida: ");
         return chosen;
-    }
 
     char *token = strtok(move, " "); // prende la prima parola, corrispondente alla faccia
 
@@ -462,7 +459,7 @@ void update(Game *game)
         return;
     case 'u':
         draw(game, 2);
-        display_message("Hai dimenticato di dire UNO!\n");
+        display_message("Hai dimenticato di dire UNO!");
         show_drawn(game, 2);
         next_turn(game);
         return;
@@ -544,7 +541,7 @@ void draw(Game *game, int n)
     {
         if (!game->SzDeck) //se il mazzo termina le carte
         {
-            display_message("\nChe partita! Il mazzo principale e' appena stato riempito di nuovo!\n");
+            display_message("Che partita! Il mazzo principale e' appena stato riempito di nuovo!");
             refill(game);
         }
 
@@ -580,7 +577,7 @@ void show_drawn(Game *game, int n)
 
 int choose_color()
 {
-    printf("Scegli il colore della carta giocata: ");
+    printf("\nScegli il colore della carta giocata: ");
     char *color = (char *)malloc(sizeof(char) * 10);
 
     int res = 0;
@@ -599,7 +596,7 @@ int choose_color()
             res = 4;
 
         if (res == 0)
-            printf("Seleziona un colore valido: ");
+            printf("\nSeleziona un colore valido: ");
     }
     free(color);
     return res;
@@ -651,14 +648,14 @@ void plus(Game *game)
             }
             
             if(!in_hand)
-                display_message("Non hai quella carta, selezionane un'altra: ");
+                display_message("Non hai quella carta, selezionane un'altra");
             else {
                 if (!strcmp(chosen.front, game->DiscardDeck.front))
                     return;
 
                 char ch[30] = "Gioca il tuo ";
                 strcat(ch, (strcmp(game->DiscardDeck.front, "+2") ? "+4" : "+2"));
-                strcat(ch, "!\n");
+                strcat(ch, "!");
 
                 display_message(ch);
             }
@@ -666,7 +663,7 @@ void plus(Game *game)
         }
         else
         {
-            display_message("Seleziona una mossa valida: ");
+            display_message("Seleziona una mossa valida");
         }
     }
 }
@@ -791,7 +788,10 @@ bool play_again() {
 //rappresentate a schermo
 void display_message(char* str)
 {
-    printf(str);
+    char ch[200] = "\n";
+    strcat(ch, str);
+    strcat(ch, "\n\n");
+    printf(ch);
 }
 
 void help()
