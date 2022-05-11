@@ -321,7 +321,7 @@ void get_move(Game *game)
             // confronto con quella in cima al mazzo discard
             if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
             {
-                printf("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
+                display_message("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra: ");
             }
             else
             {
@@ -337,12 +337,12 @@ void get_move(Game *game)
                     }
                 }
 
-                printf("Non hai quella carta, selezionane un'altra: ");
+                display_message("Non hai quella carta, selezionane un'altra: ");
             }
         }
         else
         {
-            printf("Seleziona una mossa valida: ");
+            display_message("Seleziona una mossa valida: ");
         }
     }
 }
@@ -462,7 +462,7 @@ void update(Game *game)
         return;
     case 'u':
         draw(game, 2);
-        printf("Hai dimenticato di dire UNO!\n");
+        display_message("Hai dimenticato di dire UNO!\n");
         show_drawn(game, 2);
         next_turn(game);
         return;
@@ -544,7 +544,7 @@ void draw(Game *game, int n)
     {
         if (!game->SzDeck) //se il mazzo termina le carte
         {
-            printf("\n%sChe partita! Il mazzo principale e' appena stato riempito di nuovo!%s\n", RED, RESET);
+            display_message("\nChe partita! Il mazzo principale e' appena stato riempito di nuovo!\n");
             refill(game);
         }
 
@@ -651,18 +651,22 @@ void plus(Game *game)
             }
             
             if(!in_hand)
-                printf("Non hai quella carta, selezionane un'altra: ");
+                display_message("Non hai quella carta, selezionane un'altra: ");
             else {
                 if (!strcmp(chosen.front, game->DiscardDeck.front))
                     return;
 
-                printf("Gioca il tuo %s!\n", (strcmp(game->DiscardDeck.front, "+2") ? "+4" : "+2"));
+                char ch[30] = "Gioca il tuo ";
+                strcat(ch, (strcmp(game->DiscardDeck.front, "+2") ? "+4" : "+2"));
+                strcat(ch, "!\n");
+
+                display_message(ch);
             }
 
         }
         else
         {
-            printf("Seleziona una mossa valida: ");
+            display_message("Seleziona una mossa valida: ");
         }
     }
 }
@@ -782,16 +786,23 @@ bool play_again() {
 
     return again;
 }
+//l'unico scopo di questa funzione e' separare il piú possibile le funzioni
+//legate alla logica del gioco con il modo in cui le informazioni sono
+//rappresentate a schermo
+void display_message(char* str)
+{
+    printf(str);
+}
 
 void help()
 {
-    
+    system(clear);
+
+    // le regole vengono lette dal file rules.txt
     FILE* rules;
 
     rules = fopen("rules.txt", "r");
     char ch[200];
-
-    system(clear);
 
     while (!feof(rules)) {
         fgets(ch, 200, rules);

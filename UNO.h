@@ -89,4 +89,5 @@ void show_drawn(Game*, int);
 void help();
 void show_winner(int);
 bool play_again();
+void display_message(char*);
 void clean_stdin();
