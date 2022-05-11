@@ -148,7 +148,8 @@ void init_players(Game *game)
 //  Inoltre chiama plus() per gestire i +2 e +4
 void get_move(Game *game)
 {
-    if (game->FirstTurn) {
+    if (game->FirstTurn)
+    {
         first_turn_effects(game);
         return;
     }
@@ -238,7 +239,7 @@ void update(Game *game)
         draw(game, 1);
         show_drawn(game, 1);
         struct card drawn = *(player + *szHand - 1);
-        if(strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n))
+        if (strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n))
             next_turn(game);
         return;
     case 'u':
@@ -278,7 +279,8 @@ void update(Game *game)
     remove_from_hand(game, played);
 
     // controlla vittoria
-    if (!(*szHand)) {
+    if (!(*szHand))
+    {
         game->GameOver = true;
         return;
     }
@@ -423,7 +425,7 @@ void draw(Game *game, int n)
 {
     while (n > 0)
     {
-        if (!game->SzDeck) //se il mazzo termina le carte
+        if (!game->SzDeck) // se il mazzo termina le carte
         {
             display_message("Che partita! Il mazzo principale e' appena stato riempito di nuovo!");
             refill(game);
@@ -440,9 +442,7 @@ void draw(Game *game, int n)
 
         n--;
     }
-
 }
-
 
 void plus(Game *game)
 {
@@ -459,8 +459,8 @@ void plus(Game *game)
         game->Move = '+';
         return;
     }
-    
-    //Nel caso il giocatore abbia in mano un +2 / +4
+
+    // Nel caso il giocatore abbia in mano un +2 / +4
     while (true)
     {
 
@@ -488,10 +488,11 @@ void plus(Game *game)
                     in_hand = true;
                 }
             }
-            
-            if(!in_hand)
+
+            if (!in_hand)
                 display_message("Non hai quella carta, selezionane un'altra");
-            else {
+            else
+            {
                 if (!strcmp(chosen.front, game->DiscardDeck.front))
                     return;
 
@@ -501,7 +502,6 @@ void plus(Game *game)
 
                 display_message(ch);
             }
-
         }
         else
         {
@@ -521,11 +521,12 @@ bool forgot_uno()
     return (strcmp(words, "uno") && strcmp(words, "uno!"));
 }
 
-void first_turn_effects(Game* game)
+void first_turn_effects(Game *game)
 {
     game->FirstTurn = false;
 
-    switch (game->DiscardDeck.front[0]) {
+    switch (game->DiscardDeck.front[0])
+    {
     case 'S':
 
         clean_stdin();
@@ -546,23 +547,24 @@ void first_turn_effects(Game* game)
     case 'R':
         game->Rotation = !game->Rotation;
         break;
-    case'+':
+    case '+':
         game->Plus += game->DiscardDeck.front[1] - 48;
     }
     game->Move = ' ';
 }
 
-//nel caso raro in cui il mazzo principale finisca le carte
-void refill(Game* game)
+// nel caso raro in cui il mazzo principale finisca le carte
+void refill(Game *game)
 {
     free(game->Deck);
-    game->Deck = (struct card*)malloc(sizeof(struct card) * SIZE_DECK);
+    game->Deck = (struct card *)malloc(sizeof(struct card) * SIZE_DECK);
     game->SzDeck = SIZE_DECK;
     shuffle(game);
 }
 
-//termina il gioco deallocando la memoria occupata da game e le sue variabili
-void end_game(Game* game) {
+// termina il gioco deallocando la memoria occupata da game e le sue variabili
+void end_game(Game *game)
+{
 
     show_winner(game->CurrentPlayer + 1);
 
@@ -584,7 +586,7 @@ void end_game(Game* game) {
 
 // stampa a video la mano del giocatore corrente e la carta in cima al mazzo discard
 // oltre a varie informazioni
-void display(Game* game)
+void display(Game *game)
 {
     transition(game);
     system(clear);
@@ -617,11 +619,12 @@ void display(Game* game)
     printf("%s\n\n\n\n", RESET);
 }
 
-//crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
-void transition(Game* game) {
+// crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
+void transition(Game *game)
+{
 
-    //ho bisogno di questa variabile per non mostrare la schermata dopo una pescata
-    //o dopo uno stop in una partita tra due giocatori
+    // ho bisogno di questa variabile per non mostrare la schermata dopo una pescata
+    // o dopo uno stop in una partita tra due giocatori
     static int player;
     if (game->FirstTurn)
         player = -1;
@@ -632,7 +635,8 @@ void transition(Game* game) {
     player = game->CurrentPlayer;
 
     char color[6] = RESET;
-    switch (game->CurrentPlayer) {
+    switch (game->CurrentPlayer)
+    {
     case 0:
         strcpy(color, RED);
         break;
@@ -654,7 +658,7 @@ void transition(Game* game) {
 
 // converte una carta in una stringa che ha come prefisso la sequenza di escape
 // corrispondente al suo colore
-const char* displayed_card(struct card* c)
+const char *displayed_card(struct card *c)
 {
     // imposta il colore
     char color[6] = RESET;
@@ -674,19 +678,19 @@ const char* displayed_card(struct card* c)
     }
 
     // per le carte speciali
-    char* face = NULL;
+    char *face = NULL;
     switch (c->front[0])
     {
     case 'S':
-        face = (char*)malloc(sizeof(char) * 5);
+        face = (char *)malloc(sizeof(char) * 5);
         strcpy(face, "Stop");
         break;
     case 'R':
-        face = (char*)malloc(sizeof(char) * 8);
+        face = (char *)malloc(sizeof(char) * 8);
         strcpy(face, "Reverse");
         break;
     case 'C':
-        face = (char*)malloc(sizeof(char) * 7);
+        face = (char *)malloc(sizeof(char) * 7);
         strcpy(face, "Choose");
     }
 
@@ -761,12 +765,13 @@ void help()
     system(clear);
 
     // le regole vengono lette dal file rules.txt
-    FILE* rules;
+    FILE *rules;
 
     rules = fopen("rules.txt", "r");
     char ch[200];
 
-    while (!feof(rules)) {
+    while (!feof(rules))
+    {
         fgets(ch, 200, rules);
         puts(ch);
     }
@@ -775,7 +780,8 @@ void help()
     clean_stdin();
 }
 
-void show_winner(int winner) {
+void show_winner(int winner)
+{
     system(clear);
 
     printf("\n\n\n\t\t\t\t\t%sVince %sil %sgiocatore%s %d%s!%s", RED, GREEN, BLUE, YELLOW, winner, RED, RESET);
@@ -783,7 +789,8 @@ void show_winner(int winner) {
     clean_stdin();
 }
 
-bool play_again() {
+bool play_again()
+{
     bool answered = false;
     bool again = false;
     while (!answered)
@@ -797,7 +804,8 @@ bool play_again() {
         clean_stdin();
         lowercase(answer);
 
-        if (!strcmp(answer, "si")) {
+        if (!strcmp(answer, "si"))
+        {
             again = true;
             answered = true;
         }
@@ -807,10 +815,10 @@ bool play_again() {
 
     return again;
 }
-//l'unico scopo di questa funzione e' separare il piú possibile le funzioni
-//legate alla logica del gioco con il modo in cui le informazioni sono
-//rappresentate a schermo
-void display_message(char* str)
+// l'unico scopo di questa funzione e' separare il piú possibile le funzioni
+// legate alla logica del gioco con il modo in cui le informazioni sono
+// rappresentate a schermo
+void display_message(char *str)
 {
     char ch[200] = "\n";
     strcat(ch, str);
@@ -818,13 +826,12 @@ void display_message(char* str)
     printf(ch);
 }
 
-
-//scanf per qualche motivo crea loop infiniti perchè il buffer di input non viene pulito completamente.
-//Ho provato fflush(stdin) ma funzionava solo su un compilatore e su un altro no.
-//questa funzione sostituisce fflush(stdin) e funziona su ogni compilatore,
-//ma se usata quando il buffer è già vuoto, attende che l'utente prema invio prima di proseguire,
-//motivo per il quale il suo secondo lavoro è quello di sostituire system("pause"),
-//poichè pause è un comando solo di Windows e non funziona su Linux e MacOs
+// scanf per qualche motivo crea loop infiniti perchè il buffer di input non viene pulito completamente.
+// Ho provato fflush(stdin) ma funzionava solo su un compilatore e su un altro no.
+// questa funzione sostituisce fflush(stdin) e funziona su ogni compilatore,
+// ma se usata quando il buffer è già vuoto, attende che l'utente prema invio prima di proseguire,
+// motivo per il quale il suo secondo lavoro è quello di sostituire system("pause"),
+// poichè pause è un comando solo di Windows e non funziona su Linux e MacOs
 void clean_stdin()
 {
     char c;

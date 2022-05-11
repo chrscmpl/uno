@@ -2,9 +2,10 @@
 
 int main()
 {
-    do {
-        Game* game;
-        game = (Game*)malloc(sizeof(Game));
+    do
+    {
+        Game *game;
+        game = (Game *)malloc(sizeof(Game));
 
         Start(game);
 
@@ -20,5 +21,5 @@ int main()
 
     } while (play_again());
 
-  return 0;
+    return 0;
 }

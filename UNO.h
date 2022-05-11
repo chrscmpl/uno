@@ -58,7 +58,6 @@ typedef struct game_state
     bool GameOver;
 } Game;
 
-
 // funzioni legate alla logica del gioco
 void Start(Game *);
 void shuffle(Game *);
@@ -69,25 +68,25 @@ void get_move(Game *);
 void update(Game *);
 struct card chosen_card();
 void lowercase(char *);
-void next_turn(Game*);
-void remove_from_hand(Game*, int);
-bool check_draw(Game*);
-void draw(Game*, int);
-void plus(Game*);
+void next_turn(Game *);
+void remove_from_hand(Game *, int);
+bool check_draw(Game *);
+void draw(Game *, int);
+void plus(Game *);
 bool forgot_uno();
-void first_turn_effects(Game*);
-void refill(Game*);
-void end_game(Game*);
+void first_turn_effects(Game *);
+void refill(Game *);
+void end_game(Game *);
 
 // funzioni legate all'interfaccia
 void display(Game *);
-void transition(Game* game);
+void transition(Game *game);
 const char *displayed_card(struct card *c);
-void read_words(char*);
+void read_words(char *);
 int choose_color();
-void show_drawn(Game*, int);
+void show_drawn(Game *, int);
 void help();
 void show_winner(int);
 bool play_again();
-void display_message(char*);
+void display_message(char *);
 void clean_stdin();
