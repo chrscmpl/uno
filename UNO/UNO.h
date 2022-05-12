@@ -66,7 +66,6 @@ typedef struct game_state
 void start(Game *);
 void shuffle(Game *);
 struct card *find_empty_space(Game *);
-int get_players();
 void init_players(Game *);
 void get_move(Game *);
 void update(Game *);
@@ -92,6 +91,7 @@ void read_words(char *);
 int choose_color();
 void show_drawn(Game *, int);
 void help();
+int get_players();
 void show_winner(int);
 bool play_again();
 void display_message(char *);

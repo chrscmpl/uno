@@ -66,7 +66,6 @@ typedef struct game_state
 void start(Game *);
 void shuffle(Game *);
 struct card *find_empty_space(Game *);
-int get_players();
 void init_players(Game *);
 void get_move(Game *);
 void update(Game *);
@@ -92,6 +91,7 @@ void read_words(char *);
 int choose_color();
 void show_drawn(Game *, int);
 void help();
+int get_players();
 void show_winner(int);
 bool play_again();
 void display_message(char *);
@@ -230,29 +230,6 @@ struct card *find_empty_space(Game *game)
     return space;
 }
 
-// richiede dalla tastiera l'inserimento del numero di giocatori
-int get_players()
-{
-    system(clear);
-    int p = 0;
-    printf("Inserisci il numero di giocatori (compreso tra 1 e 4): ");
-    // semplice loop che si assicura che il numero sia compreso tra 1 e 4
-    while (p < 1 || p > 4)
-    {
-        scanf("%d", &p);
-        clean_stdin();
-        if (p < 1 || p > 4)
-        {
-            system(clear);
-            printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 1 e 4: ");
-        }
-    }
-
-    system(clear);
-
-    return p;
-}
-
 // inizializza i mazzi dei giocatori
 void init_players(Game *game)
 {
@@ -346,7 +323,7 @@ void get_move(Game *game)
         {
 
             // confronto con quella in cima al mazzo discard
-            if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != w && game->DiscardDeck.color != w)
+            if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != w && game->DiscardDeck.color != w && !is_AI(game))
             {
                 display_message("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra");
             }
@@ -361,7 +338,8 @@ void get_move(Game *game)
                         // se si e' deciso di pescare e si prova a giocare una carta diversa dall'ultima
                         if (game->HasDrawn && ((temp.color != (*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer) - 1)->color) || strcmp(temp.front, (*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer) - 1)->front)))
                         {
-                            display_message("Devi necessariamente giocare la carta che hai pescato");
+                            if (!is_AI(game))
+                                display_message("Devi necessariamente giocare la carta che hai pescato");
                         }
                         else if (game->HasDrawn)
                         {
@@ -377,13 +355,14 @@ void get_move(Game *game)
                         }
                     }
                 }
-                if (!game->HasDrawn)
+                if (!game->HasDrawn && !is_AI(game))
                     display_message("Non hai quella carta, selezionane un'altra");
             }
         }
         else
         {
-            display_message("Seleziona una mossa valida");
+            if (!is_AI(game))
+                display_message("Seleziona una mossa valida");
         }
     }
 }
@@ -692,7 +671,7 @@ void plus(Game *game)
                 }
             }
 
-            if (!in_hand)
+            if (!in_hand && !is_AI(game))
                 display_message("Non hai quella carta, selezionane un'altra");
             else
             {
@@ -703,12 +682,14 @@ void plus(Game *game)
                 strcat(ch, (strcmp(game->DiscardDeck.front, "+2") ? "+4" : "+2"));
                 strcat(ch, "!");
 
-                display_message(ch);
+                if (!is_AI(game))
+                    display_message(ch);
             }
         }
         else
         {
-            display_message("Seleziona una mossa valida");
+            if (!is_AI(game))
+                display_message("Seleziona una mossa valida");
         }
     }
 }
@@ -1016,6 +997,10 @@ void help()
     FILE *rules;
 
     rules = fopen("rules.txt", "r");
+
+    if (!rules)
+        display_message("Impossibile aprire il file contenente le regole");
+
     char ch[200];
 
     while (!feof(rules))
@@ -1026,6 +1011,29 @@ void help()
 
     fclose(rules);
     clean_stdin(); // attende l'invio
+}
+
+// richiede dalla tastiera l'inserimento del numero di giocatori
+int get_players()
+{
+    system(clear);
+    int p = 0;
+    printf("Inserisci il numero di giocatori (compreso tra 1 e 4): ");
+    // semplice loop che si assicura che il numero sia compreso tra 1 e 4
+    while (p < 1 || p > 4)
+    {
+        scanf("%d", &p);
+        clean_stdin();
+        if (p < 1 || p > 4)
+        {
+            system(clear);
+            printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 1 e 4: ");
+        }
+    }
+
+    system(clear);
+
+    return p;
 }
 
 // schermata di vittoria
@@ -1064,6 +1072,8 @@ bool play_again()
         else if (!strcmp(answer, "no"))
             answered = true;
     }
+
+    system(clear);
 
     return again;
 }
