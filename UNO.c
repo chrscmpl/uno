@@ -285,6 +285,7 @@ void update(Game *game)
         help();
         return;
     case 'd':
+    {
         draw(game, 1);
         if (!is_AI(game))
             show_drawn(game, 1);
@@ -294,6 +295,7 @@ void update(Game *game)
         else
             game->HasDrawn = true; // serve a costringere il giocatore a giocare la carta pescata
         return;
+    }
     case 'u':
         draw(game, 2);
         display_message("Hai dimenticato di dire UNO!");
