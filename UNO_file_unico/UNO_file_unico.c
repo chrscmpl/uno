@@ -323,7 +323,7 @@ void get_move(Game *game)
         {
 
             // confronto con quella in cima al mazzo discard
-            if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != w && game->DiscardDeck.color != w && !is_AI(game))
+            if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != w && game->DiscardDeck.color != w)
             {
                 display_message("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra");
             }
@@ -338,8 +338,7 @@ void get_move(Game *game)
                         // se si e' deciso di pescare e si prova a giocare una carta diversa dall'ultima
                         if (game->HasDrawn && ((temp.color != (*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer) - 1)->color) || strcmp(temp.front, (*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer) - 1)->front)))
                         {
-                            if (!is_AI(game))
-                                display_message("Devi necessariamente giocare la carta che hai pescato");
+                            display_message("Devi necessariamente giocare la carta che hai pescato");
                         }
                         else if (game->HasDrawn)
                         {
@@ -355,7 +354,7 @@ void get_move(Game *game)
                         }
                     }
                 }
-                if (!game->HasDrawn && !is_AI(game))
+                if (!game->HasDrawn)
                     display_message("Non hai quella carta, selezionane un'altra");
             }
         }
@@ -671,7 +670,7 @@ void plus(Game *game)
                 }
             }
 
-            if (!in_hand && !is_AI(game))
+            if (!in_hand)
                 display_message("Non hai quella carta, selezionane un'altra");
             else
             {
