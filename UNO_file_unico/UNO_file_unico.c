@@ -999,7 +999,10 @@ void help()
     rules = fopen("rules.txt", "r");
 
     if (!rules)
+    {
         display_message("Impossibile aprire il file contenente le regole");
+        return;
+    }
 
     char ch[200];
 
