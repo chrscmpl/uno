@@ -14,7 +14,8 @@ void Start(Game *game)
     // inizializzazione mani dei giocatori
     game->SzPlayers = get_players();
 
-    if (game->SzPlayers == 1) {
+    if (game->SzPlayers == 1)
+    {
         game->AI = true;
         game->SzPlayers = 2;
     }
@@ -114,11 +115,13 @@ int get_players()
     system(clear);
     int p = 0;
     printf("Inserisci il numero di giocatori (compreso tra 1 e 4): ");
+    // semplice loop che si assicura che il numero sia compreso tra 1 e 4
     while (p < 1 || p > 4)
     {
         scanf("%d", &p);
         clean_stdin();
-        if (p < 1 || p > 4) {
+        if (p < 1 || p > 4)
+        {
             system(clear);
             printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 1 e 4: ");
         }
@@ -160,6 +163,7 @@ void init_players(Game *game)
 //  - ad un numero corrispondente alla posizione della carta da giocare
 //    nella mano del giocatore se si è selezionata una carta valida
 //  Inoltre chiama plus() per gestire i +2 e +4
+//  Ammetto che è venuta troppo troppo complicata come funzione
 void get_move(Game *game)
 {
     if (game->FirstTurn)
@@ -182,7 +186,8 @@ void get_move(Game *game)
         return;
     }
 
-    if (!is_AI(game)) {
+    if (!is_AI(game))
+    {
         // ricorda di dire Uno!
         if (*(game->SzHands + game->CurrentPlayer) == 1 && forgot_uno())
         {
@@ -207,7 +212,7 @@ void get_move(Game *game)
             return;
         }
 
-        //se si e' scelto di pescare
+        // se si e' scelto di pescare
         if (!(game->HasDrawn) && chosen.front[0] == 'd')
         {
             display_message("");
@@ -237,12 +242,13 @@ void get_move(Game *game)
                         {
                             display_message("Devi necessariamente giocare la carta che hai pescato");
                         }
-                        else if (game->HasDrawn) {
+                        else if (game->HasDrawn)
+                        {
                             game->FirstTurn = false;
                             game->Move = *(game->SzHands + game->CurrentPlayer) + 47;
                             return;
                         }
-                        else 
+                        else
                         {
                             game->FirstTurn = false;
                             game->Move = i + 48;
@@ -250,7 +256,7 @@ void get_move(Game *game)
                         }
                     }
                 }
-                if(!game->HasDrawn)
+                if (!game->HasDrawn)
                     display_message("Non hai quella carta, selezionane un'altra");
             }
         }
@@ -266,9 +272,11 @@ void update(Game *game)
     struct card *player = *(game->Players + game->CurrentPlayer); // per leggibilità
     int *szHand = (game->SzHands + game->CurrentPlayer);
     int played = game->Move - 48;
+
     bool stop = false;
 
     // help e pescate
+    // l'IA ha complicato un po' questo switch
     switch (game->Move)
     {
     case ' ':
@@ -284,7 +292,7 @@ void update(Game *game)
         if (strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n) && (game->DiscardDeck.color != n))
             next_turn(game);
         else
-            game->HasDrawn = true;
+            game->HasDrawn = true; // serve a costringere il giocatore a giocare la carta pescata
         return;
     case 'u':
         draw(game, 2);
@@ -294,10 +302,10 @@ void update(Game *game)
         next_turn(game);
         return;
     case '+':
-        draw(game, game->Plus);
-        if(!is_AI(game))
+        draw(game, game->Plus); // pesca la quantità di carte data dalla somma dei +2 o +4
+        if (!is_AI(game))
             show_drawn(game, game->Plus);
-        game->Plus = 0;
+        game->Plus = 0; // resetta la pila
         return;
     }
 
@@ -320,18 +328,19 @@ void update(Game *game)
             game->DiscardDeck.color = (enum col)rand() % 5;
         break;
     case '+':
-        if ((player + played)->front[1] == '4') {
+        if ((player + played)->front[1] == '4')
+        {
             if (!is_AI(game))
                 game->DiscardDeck.color = (enum col)choose_color();
             else
-                game->DiscardDeck.color = (enum col)rand() %5;
+                game->DiscardDeck.color = (enum col)rand() % 5;
         }
-        game->Plus += (player + played)->front[1] - 48;
+        game->Plus += (player + played)->front[1] - 48; // somma alla pila di carte da pescare
     }
 
-    remove_from_hand(game, played);
+    remove_from_hand(game, played); // toglie la carta giocata dalla mano
 
-    game->HasDrawn = false;
+    game->HasDrawn = false; // necessario per la pescata spontanea
 
     // controlla vittoria
     if (!(*szHand))
@@ -340,13 +349,13 @@ void update(Game *game)
         return;
     }
 
-    next_turn(game);
+    next_turn(game); // passa il turno
 
     if (stop)
-        next_turn(game);
+        next_turn(game); // lo passa ancora se si è giocato uno stop
 
-    fflush(stdin);
-    game->Move = ' ';
+    fflush(stdin);    // non so perchè l'ho messo :D
+    game->Move = ' '; // in teoria non serve a niente ma da' una sicurezza in più
 }
 
 // può restituire
@@ -370,7 +379,7 @@ struct card chosen_card()
         return chosen;
     }
 
-    //se si sceglie di pescare
+    // se si sceglie di pescare
     if (!strcmp(move, "pesco"))
     {
         chosen.front[0] = 'd';
@@ -430,6 +439,8 @@ struct card chosen_card()
     return chosen;
 }
 
+// converte tutti i caratteri maiuscoli di una stringa in minuscolo,
+// necessaria per le comparazioni
 void lowercase(char *str)
 {
     // converte tutti i caratteri maiuscoli e minuscoli per le
@@ -467,6 +478,7 @@ void remove_from_hand(Game *game, int played)
     (*(game->SzHands + game->CurrentPlayer))--;
 }
 
+// controlla che il giocatore abbia carte giocabili nella mano
 bool check_draw(Game *game)
 {
     if (game->DiscardDeck.color == n) // solo nel caso del primo turno
@@ -506,8 +518,10 @@ void draw(Game *game, int n)
     }
 }
 
+// variazione di get_move() per quando un giocatore gioca un +2 o +4
 void plus(Game *game)
 {
+    // controlla se il giocatore abbia la possibilità di rispondere
     bool draw = false;
     draw = true;
     for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
@@ -529,7 +543,7 @@ void plus(Game *game)
 
         if (is_AI(game))
             chosen = AI_turn(game);
-        else 
+        else
             chosen = chosen_card();
 
         // se si è digitato 'aiuto'
@@ -576,6 +590,7 @@ void plus(Game *game)
     }
 }
 
+// si assicura che ci si ricordi di dire uno prima di giocare l'ultima carta della mano
 bool forgot_uno()
 {
     char words[20];
@@ -587,6 +602,8 @@ bool forgot_uno()
     return (strcmp(words, "uno") && strcmp(words, "uno!"));
 }
 
+// serve ad attivare gli effetti delle carte speciali nel caso in cui la prima carta sul mazzo
+// discard all'inizio della partita sia speciale
 void first_turn_effects(Game *game)
 {
     game->FirstTurn = false;
@@ -610,9 +627,11 @@ void first_turn_effects(Game *game)
                 game->CurrentPlayer += game->SzPlayers;
         }
         break;
+
     case 'R':
         game->Rotation = !game->Rotation;
         break;
+
     case '+':
         game->Plus += game->DiscardDeck.front[1] - 48;
     }
@@ -646,14 +665,17 @@ void end_game(Game *game)
     free(game);
 }
 
-struct card AI_turn(Game* game) {
+// l'IA gioca carte a caso dalla propria mano finchè non ne gioca una buona
+struct card AI_turn(Game *game)
+{
     if (game->AIPlay > *(game->SzHands + game->CurrentPlayer))
         game->AIPlay = 0;
     game->AIPlay++;
     return *(*(game->Players + game->CurrentPlayer) + game->AIPlay - 1);
 }
 
-bool is_AI(Game* game) {
+bool is_AI(Game *game)
+{
     return (game->AI && (game->CurrentPlayer == 1));
 }
 
@@ -668,16 +690,17 @@ void display(Game *game)
     if (is_AI(game))
         return;
 
-    if(!game->AI)
+    if (!game->AI)
         transition(game);
 
     system(clear);
 
     if (!game->AI)
         printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
-    else {
-        static int number_of_turns;
-
+    else
+    {
+        static int number_of_turns; // in una partita contro l'IA metto quantomeno il numero del turno così almeno
+                                    // si capisce quando il proprio turno finisce e inizia
         if (game->FirstTurn)
             number_of_turns = 1;
 
@@ -713,9 +736,8 @@ void display(Game *game)
 
     if (*(game->SzHands + game->CurrentPlayer) > 1)
         printf("Seleziona la carta che intendi giocare, oppure digita %s'aiuto' per consultare le regole\n\n", ((game->HasDrawn || game->Plus) ? "" : "'pesco' per pescare o "));
-
     else
-        printf("Seleziona la carta che intendi giocare, ma ricorda cosa devi fare prima\n\n");
+        printf("Seleziona la carta che intendi giocare, ma ricorda cosa devi fare prima\n\n"); // dire uno
 }
 
 // crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
@@ -802,6 +824,7 @@ const char *displayed_card(struct card *c)
     return colored_card;
 }
 
+// legge l'input dal teminale
 void read_words(char *str)
 {
     char words[20];
@@ -816,6 +839,7 @@ void read_words(char *str)
     strcpy(str, words);
 }
 
+// chiede di scegliere un colore se la carta giocata è una Wild
 int choose_color()
 {
     printf("\nScegli il colore della carta giocata: ");
@@ -843,12 +867,13 @@ int choose_color()
     return res;
 }
 
+// mostra le carte che si sono appena pescate
 void show_drawn(Game *game, int n)
 {
     printf("Hai pescato %s:\n", (n > 1 ? "le seguenti carte" : "la seguente carta"));
-    struct card *p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer);
+    struct card *p = *(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer); // p punta ad una carta dopo la fine della mano
 
-    p -= n;
+    p -= n; // p punta alla n-ultima carta della mano
     for (int i = 0; i < n; i++)
     {
         printf("%s\t\t", displayed_card(p));
@@ -859,6 +884,7 @@ void show_drawn(Game *game, int n)
     clean_stdin(); // system("pause")
 }
 
+// pagina delle regole
 void help()
 {
     system(clear);
@@ -876,22 +902,26 @@ void help()
     }
 
     fclose(rules);
-    clean_stdin();
+    clean_stdin(); // attende l'invio
 }
 
+// schermata di vittoria
 void show_winner(int winner)
 {
     system(clear);
 
     printf("\n\n\n\n\n\n\n\n\t\t\t\t\t\t%sVince %sil %sgiocatore%s %d%s!%s", RED, GREEN, BLUE, YELLOW, winner, RED, RESET);
 
-    clean_stdin();
+    clean_stdin(); // attende l'invio
 }
 
+// chiede se si vuole giocare ancora al termine di una partita
 bool play_again()
 {
     bool answered = false;
     bool again = false;
+
+    // ripeti fintanto che non si risponde si o no
     while (!answered)
     {
         system(clear);
@@ -914,6 +944,7 @@ bool play_again()
 
     return again;
 }
+
 // l'unico scopo di questa funzione e' separare il piú possibile le funzioni
 // legate alla logica del gioco con il modo in cui le informazioni sono
 // rappresentate a schermo

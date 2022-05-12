@@ -24,41 +24,42 @@
 
 enum col
 {
-    na,
+    na, // carta non inizializzata
     r,
     g,
     b,
     y,
-    n
+    n // wild, avrei dovuto chiamarlo w
 };
 
 struct card
 {
-    char front[3];
-    enum col color;
+    char front[3];  // simbolo
+    enum col color; // colore
 };
 
 typedef struct game_state
 {
-    struct card *Deck;
-    int SzDeck;
+    struct card *Deck; // mazzo principale
+    int SzDeck;        // indica le carte rimaste nel mazzo principale
 
-    struct card **Players;
-    int SzPlayers;
-    int *SzHands;
+    struct card **Players; // array bidimensionale delle mani dei giocatori
+    int SzPlayers;         // indica il numero di giocatori
+    int *SzHands;          // array contenente le dimensioni delle mani dei giocatori
 
-    int CurrentPlayer;
-    char Move;
+    int CurrentPlayer; // indica il giocatore corrente
+    char Move;         // mossa del giocatore corrente
 
-    struct card DiscardDeck;
+    struct card DiscardDeck; // carta in cima al discard deck
 
-    int Plus;
-    bool Rotation;
-    bool FirstTurn;
-    bool HasDrawn;
-    int AIPlay;
-    bool AI;
-    bool GameOver;
+    int Plus;       // somma delle carte da pescare date dai +2 o +4 appena giocati
+    bool Rotation;  // true == orario    false == antiorario
+    bool FirstTurn; // serve per alcune funzioni per capire se è il primo turno
+    bool HasDrawn;  // serve ad assicurarsi che se si decide di pescare con una carta compatibile in mano
+                    // e si peschi una carta compatibile poi si giochi la carta pescata
+    int AIPlay;     // serve all'IA per tenere traccia delle carte che ha giocato
+    bool AI;        // true == partita contro l'IA      false == partita tra più giocatori
+    bool GameOver;  // permette di terminare il gioco
 } Game;
 
 // funzioni legate alla logica del gioco
@@ -80,8 +81,8 @@ bool forgot_uno();
 void first_turn_effects(Game *);
 void refill(Game *);
 void end_game(Game *);
-struct card AI_turn(Game*);
-bool is_AI(Game*);
+struct card AI_turn(Game *);
+bool is_AI(Game *);
 
 // funzioni legate all'interfaccia
 void display(Game *);
