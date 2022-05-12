@@ -56,6 +56,8 @@ typedef struct game_state
     bool Rotation;
     bool FirstTurn;
     bool HasDrawn;
+    int AIPlay;
+    bool AI;
     bool GameOver;
 } Game;
 
@@ -78,11 +80,13 @@ bool forgot_uno();
 void first_turn_effects(Game *);
 void refill(Game *);
 void end_game(Game *);
+struct card AI_turn(Game*);
+bool is_AI(Game*);
 
 // funzioni legate all'interfaccia
 void display(Game *);
-void transition(Game *game);
-const char *displayed_card(struct card *c);
+void transition(Game *);
+const char *displayed_card(struct card *);
 void read_words(char *);
 int choose_color();
 void show_drawn(Game *, int);

@@ -13,6 +13,14 @@ void Start(Game *game)
 
     // inizializzazione mani dei giocatori
     game->SzPlayers = get_players();
+
+    if (game->SzPlayers == 1) {
+        game->AI = true;
+        game->SzPlayers = 2;
+    }
+    else
+        game->AI = false;
+
     init_players(game);
 
     // inizializzazione variabili
@@ -23,6 +31,7 @@ void Start(Game *game)
     game->Plus = 0;
     game->FirstTurn = true;
     game->HasDrawn = false;
+    game->AIPlay = 0;
 }
 
 // inizializza il mazzo principale
@@ -104,15 +113,19 @@ int get_players()
 {
     system(clear);
     int p = 0;
-    printf("inserire il numero di giocatori: ");
-    while (p < 2 || p > 4)
+    printf("Inserisci il numero di giocatori (compreso tra 1 e 4): ");
+    while (p < 1 || p > 4)
     {
         scanf("%d", &p);
         clean_stdin();
-        if (p < 2 || p > 4)
-            printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 2 e 4: ");
+        if (p < 1 || p > 4) {
+            system(clear);
+            printf("numero di giocatori non valido, inserire un numero di giocatori compreso tra 1 e 4: ");
+        }
     }
+
     system(clear);
+
     return p;
 }
 
@@ -169,17 +182,23 @@ void get_move(Game *game)
         return;
     }
 
-    // ricorda di dire Uno!
-    if (*(game->SzHands + game->CurrentPlayer) == 1 && forgot_uno())
-    {
-        game->Move = 'u';
-        return;
+    if (!is_AI(game)) {
+        // ricorda di dire Uno!
+        if (*(game->SzHands + game->CurrentPlayer) == 1 && forgot_uno())
+        {
+            game->Move = 'u';
+            return;
+        }
     }
 
     while (true)
     {
+        struct card chosen;
 
-        struct card chosen = chosen_card();
+        if (is_AI(game))
+            chosen = AI_turn(game);
+        else
+            chosen = chosen_card();
 
         // se si è digitato 'aiuto'
         if (chosen.front[0] == 'h')
@@ -259,7 +278,8 @@ void update(Game *game)
         return;
     case 'd':
         draw(game, 1);
-        show_drawn(game, 1);
+        if (!is_AI(game))
+            show_drawn(game, 1);
         struct card drawn = *(player + *szHand - 1);
         if (strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n) && (game->DiscardDeck.color != n))
             next_turn(game);
@@ -269,12 +289,14 @@ void update(Game *game)
     case 'u':
         draw(game, 2);
         display_message("Hai dimenticato di dire UNO!");
-        show_drawn(game, 2);
+        if (!is_AI(game))
+            show_drawn(game, 2);
         next_turn(game);
         return;
     case '+':
         draw(game, game->Plus);
-        show_drawn(game, game->Plus);
+        if(!is_AI(game))
+            show_drawn(game, game->Plus);
         game->Plus = 0;
         return;
     }
@@ -292,11 +314,18 @@ void update(Game *game)
         game->Rotation = !game->Rotation;
         break;
     case 'C':
-        game->DiscardDeck.color = (enum col)choose_color();
+        if (!is_AI(game))
+            game->DiscardDeck.color = (enum col)choose_color();
+        else
+            game->DiscardDeck.color = (enum col)rand() % 5;
         break;
     case '+':
-        if ((player + played)->front[1] == '4')
-            game->DiscardDeck.color = (enum col)choose_color();
+        if ((player + played)->front[1] == '4') {
+            if (!is_AI(game))
+                game->DiscardDeck.color = (enum col)choose_color();
+            else
+                game->DiscardDeck.color = (enum col)rand() %5;
+        }
         game->Plus += (player + played)->front[1] - 48;
     }
 
@@ -496,8 +525,12 @@ void plus(Game *game)
     // Nel caso il giocatore abbia in mano un +2 / +4
     while (true)
     {
+        struct card chosen;
 
-        struct card chosen = chosen_card();
+        if (is_AI(game))
+            chosen = AI_turn(game);
+        else 
+            chosen = chosen_card();
 
         // se si è digitato 'aiuto'
         if (chosen.front[0] == 'h')
@@ -613,6 +646,17 @@ void end_game(Game *game)
     free(game);
 }
 
+struct card AI_turn(Game* game) {
+    if (game->AIPlay > *(game->SzHands + game->CurrentPlayer))
+        game->AIPlay = 0;
+    game->AIPlay++;
+    return *(*(game->Players + game->CurrentPlayer) + game->AIPlay - 1);
+}
+
+bool is_AI(Game* game) {
+    return (game->AI && (game->CurrentPlayer == 1));
+}
+
 /******************************************************************************
 *************************FUNZIONI DELL'INTERFACCIA*****************************
 ******************************************************************************/
@@ -621,10 +665,25 @@ void end_game(Game *game)
 // oltre a varie informazioni
 void display(Game *game)
 {
-    transition(game);
+    if (is_AI(game))
+        return;
+
+    if(!game->AI)
+        transition(game);
+
     system(clear);
 
-    printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
+    if (!game->AI)
+        printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
+    else {
+        static int number_of_turns;
+
+        if (game->FirstTurn)
+            number_of_turns = 1;
+
+        printf("E' il turno numero %d\n\n", number_of_turns);
+        number_of_turns++;
+    }
 
     // mostra il numero di carte nelle mani degli avversari, nell'ordine della rotazione
     for (int i = game->Rotation ? 0 : (game->SzPlayers - 1); (game->Rotation && (i < game->SzPlayers)) || (!game->Rotation && (i >= 0));)
@@ -638,7 +697,8 @@ void display(Game *game)
     }
 
     // mostra il verso di rotazione
-    printf("\nLa rotazione e' attualmente in senso %s\n\n\n", game->Rotation ? "orario" : "antiorario");
+    if (game->SzPlayers > 2)
+        printf("\nLa rotazione e' attualmente in senso %s\n\n\n", game->Rotation ? "orario" : "antiorario");
 
     for (int i = 0; (i < (*(game->SzHands + game->CurrentPlayer))) && (i < STARTING_HAND_SIZE); i++) // aggiusta il mazzo discard più o meno
         printf("\t");                                                                                // al centro rispetto alla mano
@@ -655,7 +715,7 @@ void display(Game *game)
         printf("Seleziona la carta che intendi giocare, oppure digita %s'aiuto' per consultare le regole\n\n", ((game->HasDrawn || game->Plus) ? "" : "'pesco' per pescare o "));
 
     else
-        printf("Seleziona la carta che intendi giocare, ma ricorda cosa devi fare prima");
+        printf("Seleziona la carta che intendi giocare, ma ricorda cosa devi fare prima\n\n");
 }
 
 // crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
