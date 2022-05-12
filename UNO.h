@@ -29,7 +29,7 @@ enum col
     g,
     b,
     y,
-    n // wild, avrei dovuto chiamarlo w
+    w // wild
 };
 
 struct card

@@ -85,7 +85,7 @@ void shuffle(Game *game)
     for (int i = 0; i < 4; i++)
     {
         struct card *pos = find_empty_space(game);
-        pos->color = n;
+        pos->color = w;
         strcpy(pos->front, "C");
     }
 
@@ -93,7 +93,7 @@ void shuffle(Game *game)
     for (int i = 0; i < 4; i++)
     {
         struct card *pos = find_empty_space(game);
-        pos->color = n;
+        pos->color = w;
         strcpy(pos->front, "+4");
     }
 }
@@ -225,7 +225,7 @@ void get_move(Game *game)
         {
 
             // confronto con quella in cima al mazzo discard
-            if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != n && game->DiscardDeck.color != n)
+            if (strcmp(chosen.front, game->DiscardDeck.front) && chosen.color != game->DiscardDeck.color && chosen.color != w && game->DiscardDeck.color != w)
             {
                 display_message("La carta non e' compatibile con quella in cima al mazzo Discard, selezionane un'altra");
             }
@@ -289,7 +289,7 @@ void update(Game *game)
         if (!is_AI(game))
             show_drawn(game, 1);
         struct card drawn = *(player + *szHand - 1);
-        if (strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n) && (game->DiscardDeck.color != n))
+        if (strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != w) && (game->DiscardDeck.color != w))
             next_turn(game);
         else
             game->HasDrawn = true; // serve a costringere il giocatore a giocare la carta pescata
@@ -408,7 +408,7 @@ struct card chosen_card()
     {
         strcpy(chosen.front, token);
         if (chosen.front[1] == '4')
-            chosen.color = n;
+            chosen.color = w;
     }
     // carte speciali
     else if (!strcmp(token, "reverse"))
@@ -418,7 +418,7 @@ struct card chosen_card()
     else if (!strcmp(token, "choose"))
     {
         strcpy(chosen.front, "C");
-        chosen.color = n;
+        chosen.color = w;
     }
 
     // prende la seconda parola, corrispondente al colore
@@ -481,14 +481,14 @@ void remove_from_hand(Game *game, int played)
 // controlla che il giocatore abbia carte giocabili nella mano
 bool check_draw(Game *game)
 {
-    if (game->DiscardDeck.color == n) // solo nel caso del primo turno
+    if (game->DiscardDeck.color == w) // solo nel caso del primo turno
         return false;
 
     bool draw = true;
     for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
     {
         struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
-        if (!strcmp(temp.front, game->DiscardDeck.front) || temp.color == game->DiscardDeck.color || temp.color == n)
+        if (!strcmp(temp.front, game->DiscardDeck.front) || temp.color == game->DiscardDeck.color || temp.color == w)
             draw = false;
     }
     return draw;
