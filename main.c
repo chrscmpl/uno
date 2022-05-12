@@ -7,7 +7,7 @@ int main()
         Game *game;
         game = (Game *)malloc(sizeof(Game));
 
-        Start(game);
+        start(game);
 
         // loop del gioco
         while (!game->GameOver)

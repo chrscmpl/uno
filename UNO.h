@@ -63,7 +63,7 @@ typedef struct game_state
 } Game;
 
 // funzioni legate alla logica del gioco
-void Start(Game *);
+void start(Game *);
 void shuffle(Game *);
 struct card *find_empty_space(Game *);
 int get_players();
@@ -74,7 +74,7 @@ struct card chosen_card();
 void lowercase(char *);
 void next_turn(Game *);
 void remove_from_hand(Game *, int);
-bool check_draw(Game *);
+bool check_for_draw(Game *);
 void draw(Game *, int);
 void plus(Game *);
 bool forgot_uno();

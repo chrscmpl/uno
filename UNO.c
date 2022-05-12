@@ -1,6 +1,6 @@
 #include "UNO.h"
 
-void Start(Game *game)
+void start(Game *game)
 {
     game->GameOver = false;
 
@@ -180,7 +180,7 @@ void get_move(Game *game)
     }
 
     // in caso di nessuna mossa disponibile si pesca
-    if (check_draw(game))
+    if (check_for_draw(game))
     {
         game->Move = 'd';
         return;
@@ -325,7 +325,7 @@ void update(Game *game)
         if (!is_AI(game))
             game->DiscardDeck.color = (enum col)choose_color();
         else
-            game->DiscardDeck.color = (enum col)rand() % 5;
+            game->DiscardDeck.color = (enum col)((rand() % 4) + 1);
         break;
     case '+':
         if ((player + played)->front[1] == '4')
@@ -333,7 +333,7 @@ void update(Game *game)
             if (!is_AI(game))
                 game->DiscardDeck.color = (enum col)choose_color();
             else
-                game->DiscardDeck.color = (enum col)rand() % 5;
+                game->DiscardDeck.color = (enum col)((rand() % 4) + 1);
         }
         game->Plus += (player + played)->front[1] - 48; // somma alla pila di carte da pescare
     }
@@ -479,7 +479,7 @@ void remove_from_hand(Game *game, int played)
 }
 
 // controlla che il giocatore abbia carte giocabili nella mano
-bool check_draw(Game *game)
+bool check_for_draw(Game *game)
 {
     if (game->DiscardDeck.color == w) // solo nel caso del primo turno
         return false;
