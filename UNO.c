@@ -702,7 +702,7 @@ void display(Game *game)
         static int number_of_turns; // in una partita contro l'IA metto quantomeno il numero del turno così almeno
                                     // si capisce quando il proprio turno finisce e inizia
         if (game->FirstTurn)
-            number_of_turns = 1;
+            number_of_turns = 0; // 0 e non 1 a causa di first_turn_effects() che fa "passare" il turno
 
         printf("E' il turno numero %d\n\n", number_of_turns);
         number_of_turns++;
