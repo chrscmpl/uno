@@ -55,6 +55,7 @@ typedef struct game_state
     int Plus;
     bool Rotation;
     bool FirstTurn;
+    bool HasDrawn;
     bool GameOver;
 } Game;
 

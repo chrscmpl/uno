@@ -22,6 +22,7 @@ void Start(Game *game)
     game->DiscardDeck = *(game->Deck + game->SzDeck);
     game->Plus = 0;
     game->FirstTurn = true;
+    game->HasDrawn = false;
 }
 
 // inizializza il mazzo principale
@@ -187,6 +188,14 @@ void get_move(Game *game)
             return;
         }
 
+        //se si e' scelto di pescare
+        if (!(game->HasDrawn) && chosen.front[0] == 'd')
+        {
+            display_message("");
+            game->Move = 'd';
+            return;
+        }
+
         // se la carta è valida
         if (chosen.front && chosen.color != na)
         {
@@ -204,13 +213,26 @@ void get_move(Game *game)
                     struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
                     if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
                     {
-                        game->FirstTurn = false;
-                        game->Move = i + 48;
-                        return;
+                        // se si e' deciso di pescare e si prova a giocare una carta diversa dall'ultima
+                        if (game->HasDrawn && ((temp.color != (*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer) - 1)->color) || strcmp(temp.front, (*(game->Players + game->CurrentPlayer) + *(game->SzHands + game->CurrentPlayer) - 1)->front)))
+                        {
+                            display_message("Devi necessariamente giocare la carta che hai pescato");
+                        }
+                        else if (game->HasDrawn) {
+                            game->FirstTurn = false;
+                            game->Move = *(game->SzHands + game->CurrentPlayer) + 47;
+                            return;
+                        }
+                        else 
+                        {
+                            game->FirstTurn = false;
+                            game->Move = i + 48;
+                            return;
+                        }
                     }
                 }
-
-                display_message("Non hai quella carta, selezionane un'altra");
+                if(!game->HasDrawn)
+                    display_message("Non hai quella carta, selezionane un'altra");
             }
         }
         else
@@ -239,8 +261,10 @@ void update(Game *game)
         draw(game, 1);
         show_drawn(game, 1);
         struct card drawn = *(player + *szHand - 1);
-        if (strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n))
+        if (strcmp(drawn.front, game->DiscardDeck.front) && (drawn.color != game->DiscardDeck.color) && (drawn.color != n) && (game->DiscardDeck.color != n))
             next_turn(game);
+        else
+            game->HasDrawn = true;
         return;
     case 'u':
         draw(game, 2);
@@ -278,6 +302,8 @@ void update(Game *game)
 
     remove_from_hand(game, played);
 
+    game->HasDrawn = false;
+
     // controlla vittoria
     if (!(*szHand))
     {
@@ -312,6 +338,13 @@ struct card chosen_card()
     if (!strcmp(move, "aiuto"))
     {
         chosen.front[0] = 'h';
+        return chosen;
+    }
+
+    //se si sceglie di pescare
+    if (!strcmp(move, "pesco"))
+    {
+        chosen.front[0] = 'd';
         return chosen;
     }
 
@@ -617,7 +650,12 @@ void display(Game *game)
         printf("%s\t\t", displayed_card(*(game->Players + game->CurrentPlayer) + i));
 
     printf("%s\n\n\n\n", RESET);
-    printf("Seleziona la carta che intendi giocare, oppure digita 'aiuto' per consultare le regole\n\n");
+
+    if (*(game->SzHands + game->CurrentPlayer) > 1)
+        printf("Seleziona la carta che intendi giocare, oppure digita %s'aiuto' per consultare le regole\n\n", ((game->HasDrawn || game->Plus) ? "" : "'pesco' per pescare o "));
+
+    else
+        printf("Seleziona la carta che intendi giocare, ma ricorda cosa devi fare prima");
 }
 
 // crea una transizione tra i turni dei vari giocatori così non ci si vede la mano a vicenda
@@ -653,7 +691,7 @@ void transition(Game *game)
 
     system(clear);
 
-    printf("\n\n\n\t\t\t\t\t%sTurno del giocatore %d%s", color, game->CurrentPlayer + 1, RESET);
+    printf("\n\n\n\n\n\n\n\n\t\t\t\t\t\t%sTurno del giocatore %d%s", color, game->CurrentPlayer + 1, RESET);
     clean_stdin();
 }
 
@@ -785,7 +823,7 @@ void show_winner(int winner)
 {
     system(clear);
 
-    printf("\n\n\n\t\t\t\t\t%sVince %sil %sgiocatore%s %d%s!%s", RED, GREEN, BLUE, YELLOW, winner, RED, RESET);
+    printf("\n\n\n\n\n\n\n\n\t\t\t\t\t\t%sVince %sil %sgiocatore%s %d%s!%s", RED, GREEN, BLUE, YELLOW, winner, RED, RESET);
 
     clean_stdin();
 }
@@ -798,7 +836,7 @@ bool play_again()
     {
         system(clear);
 
-        printf("\n\n\n\t\t\t\t\t%sVuoi %sgiocare %sancora%s?%s\n\n\t\t\t\t\t", RED, GREEN, BLUE, YELLOW, RESET);
+        printf("\n\n\n\n\n\n\n\n\t\t\t\t\t\t%sVuoi %sgiocare %sancora%s?%s\n\n\t\t\t\t\t\t", RED, GREEN, BLUE, YELLOW, RESET);
 
         char answer[20];
         scanf("%s", answer);
