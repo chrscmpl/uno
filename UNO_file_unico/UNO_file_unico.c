@@ -991,8 +991,6 @@ void show_drawn(Game *game, int n)
 // pagina delle regole
 void help()
 {
-    system(clear);
-
     // le regole vengono lette dal file rules.txt
     FILE *rules;
 
@@ -1001,8 +999,11 @@ void help()
     if (!rules)
     {
         display_message("Impossibile aprire il file contenente le regole");
+        clean_stdin();
         return;
     }
+
+    system(clear);
 
     char ch[200];
 
