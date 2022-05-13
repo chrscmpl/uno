@@ -76,7 +76,7 @@ void next_turn(Game *);
 void remove_from_hand(Game *, int);
 bool check_for_draw(Game *);
 void draw(Game *, int);
-void plus(Game *);
+bool check_plus(Game *);
 bool forgot_uno();
 void first_turn_effects(Game *);
 void refill(Game *);
@@ -260,9 +260,9 @@ void init_players(Game *game)
 //  - a 'd' se bisogna pescare
 //  - ad 'u' se non si è detto uno quando si doveva
 //  - ad 'h' se è stato chiesto di consultare le regole
+//  - a '+' se si è colpiti da un +2 o +4
 //  - ad un numero corrispondente alla posizione della carta da giocare
 //    nella mano del giocatore se si è selezionata una carta valida
-//  Inoltre chiama plus() per gestire i +2 e +4
 //  Ammetto che è venuta troppo troppo complicata come funzione
 void get_move(Game *game)
 {
@@ -273,9 +273,9 @@ void get_move(Game *game)
     }
 
     // +2 e +4
-    if (game->Plus)
+    if (game->Plus && check_plus(game))
     {
-        plus(game);
+        game->Move = '+';
         return;
     }
 
@@ -286,7 +286,7 @@ void get_move(Game *game)
         return;
     }
 
-    if (!is_AI(game))
+    if (!is_AI(game) && !game->Plus)
     {
         // ricorda di dire Uno!
         if (*(game->SzHands + game->CurrentPlayer) == 1 && forgot_uno())
@@ -313,7 +313,7 @@ void get_move(Game *game)
         }
 
         // se si e' scelto di pescare
-        if (!(game->HasDrawn) && chosen.front[0] == 'd')
+        if (!(game->HasDrawn) && chosen.front[0] == 'd' && !game->Plus)
         {
             display_message("");
             game->Move = 'd';
@@ -350,13 +350,25 @@ void get_move(Game *game)
                         }
                         else
                         {
-                            game->FirstTurn = false;
-                            game->Move = i + 48;
-                            return;
+                            if (game->Plus && strcmp(temp.front, game->DiscardDeck.front))
+                            {
+                                char ch[30] = "Gioca il tuo ";
+                                strcat(ch, (strcmp(game->DiscardDeck.front, "+2") ? "+4" : "+2"));
+                                strcat(ch, "!");
+
+                                if (!is_AI(game))
+                                    display_message(ch);
+                            }
+                            else
+                            {
+                                game->FirstTurn = false;
+                                game->Move = i + 48;
+                                return;
+                            }
                         }
                     }
                 }
-                if (!game->HasDrawn)
+                if (!game->HasDrawn && !game->Plus && !is_AI(game))
                     display_message("Non hai quella carta, selezionane un'altra");
             }
         }
@@ -624,8 +636,8 @@ void draw(Game *game, int n)
     }
 }
 
-// variazione di get_move() per quando un giocatore gioca un +2 o +4
-void plus(Game *game)
+// controlla se è possibile rispondere ad un +2 o +4
+bool check_plus(Game *game)
 {
     // controlla se il giocatore abbia la possibilità di rispondere
     bool draw = false;
@@ -637,65 +649,8 @@ void plus(Game *game)
     }
 
     if (draw)
-    {
-        game->Move = '+';
-        return;
-    }
-
-    // Nel caso il giocatore abbia in mano un +2 / +4
-    while (true)
-    {
-        struct card chosen;
-
-        if (is_AI(game))
-            chosen = AI_turn(game);
-        else
-            chosen = chosen_card();
-
-        // se si è digitato 'aiuto'
-        if (chosen.front[0] == 'h')
-        {
-            game->Move = 'h';
-            return;
-        }
-
-        // se la carta è valida
-        if (chosen.front && chosen.color != na)
-        {
-            bool in_hand = false;
-            // confronto con quelle nella mano del giocatore
-            for (int i = 0; i < *(game->SzHands + game->CurrentPlayer); i++)
-            {
-                struct card temp = *(*(game->Players + game->CurrentPlayer) + i);
-                if (!strcmp(temp.front, chosen.front) && chosen.color == temp.color)
-                {
-                    game->FirstTurn = false;
-                    game->Move = i + 48;
-                    in_hand = true;
-                }
-            }
-
-            if (!in_hand)
-                display_message("Non hai quella carta, selezionane un'altra");
-            else
-            {
-                if (!strcmp(chosen.front, game->DiscardDeck.front))
-                    return;
-
-                char ch[30] = "Gioca il tuo ";
-                strcat(ch, (strcmp(game->DiscardDeck.front, "+2") ? "+4" : "+2"));
-                strcat(ch, "!");
-
-                if (!is_AI(game))
-                    display_message(ch);
-            }
-        }
-        else
-        {
-            if (!is_AI(game))
-                display_message("Seleziona una mossa valida");
-        }
-    }
+        return true;
+    return false;
 }
 
 // si assicura che ci si ricordi di dire uno prima di giocare l'ultima carta della mano
