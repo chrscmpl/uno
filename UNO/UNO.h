@@ -59,6 +59,7 @@ typedef struct game_state
                     // e si peschi una carta compatibile poi si giochi la carta pescata
     int AIPlay;     // serve all'IA per tenere traccia delle carte che ha giocato
     bool AI;        // true == partita contro l'IA      false == partita tra più giocatori
+    int TurnNum;    // serve a tenere traccia di a che turno si è arrivati in una partita contro l'IA
     bool GameOver;  // permette di terminare il gioco
 } Game;
 

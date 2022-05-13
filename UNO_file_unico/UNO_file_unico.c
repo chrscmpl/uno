@@ -59,6 +59,7 @@ typedef struct game_state
                     // e si peschi una carta compatibile poi si giochi la carta pescata
     int AIPlay;     // serve all'IA per tenere traccia delle carte che ha giocato
     bool AI;        // true == partita contro l'IA      false == partita tra più giocatori
+    int TurnNum;    // serve a tenere traccia di a che turno si è arrivati in una partita contro l'IA
     bool GameOver;  // permette di terminare il gioco
 } Game;
 
@@ -154,6 +155,7 @@ void start(Game *game)
     game->FirstTurn = true;
     game->HasDrawn = false;
     game->AIPlay = 0;
+    game->TurnNum = 1;
 }
 
 // inizializza il mazzo principale
@@ -556,6 +558,9 @@ void lowercase(char *str)
 // passa il turno
 void next_turn(Game *game)
 {
+    if (game->AI && !is_AI(game)) // aumenta il numero del turno mostrato in cima alla schermata
+        game->TurnNum++;          // in una partita contro l'IA
+
     if (game->Rotation)
     {
         game->CurrentPlayer++;
@@ -801,15 +806,8 @@ void display(Game *game)
     if (!game->AI)
         printf("Turno del Giocatore %d\n\n", game->CurrentPlayer + 1); // mostra il numero del giocatore corrente
     else
-    {
-        static int number_of_turns; // in una partita contro l'IA metto quantomeno il numero del turno così almeno
-                                    // si capisce quando il proprio turno finisce e inizia
-        if (game->FirstTurn)
-            number_of_turns = 0; // 0 e non 1 a causa di first_turn_effects() che fa "passare" il turno
-
-        printf("E' il turno numero %d\n\n", number_of_turns);
-        number_of_turns++;
-    }
+        printf("E' il turno numero %d\n\n", game->TurnNum);
+    // in una partita contro l'IA metto quantomeno il numero del turno così almeno si capisce quando il proprio turno finisce e inizia
 
     // mostra il numero di carte nelle mani degli avversari, nell'ordine della rotazione
     for (int i = game->Rotation ? 0 : (game->SzPlayers - 1); (game->Rotation && (i < game->SzPlayers)) || (!game->Rotation && (i >= 0));)
